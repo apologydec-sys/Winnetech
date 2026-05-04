@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def create_admin(apps, schema_editor):
+def create_superadmin(apps, schema_editor):
     from django.contrib.auth.models import User
     username = 'admin'
     password = 'admin2026'
@@ -11,7 +11,7 @@ def create_admin(apps, schema_editor):
             email='admin@winnitech.edu.gh',
             password=password,
             first_name='WTI',
-            last_name='Admin',
+            last_name='SuperAdmin',
         )
     else:
         u = User.objects.get(username=username)
@@ -29,5 +29,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_admin, migrations.RunPython.noop),
+        migrations.RunPython(create_superadmin, migrations.RunPython.noop),
     ]

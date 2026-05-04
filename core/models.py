@@ -88,20 +88,40 @@ QUALIFICATION_CHOICES = [
 
 
 def generate_unique_staff_id():
-    """Generate a guaranteed-unique staff ID like WTI0001, WTI0002 …
-    Falls back to a random suffix if sequential IDs collide (e.g. after deletions)."""
-    # Try sequential first
+    """Generate a guaranteed-unique staff ID like WTI0001, WTI0002 …"""
     count = TeacherProfile.objects.count() + 1
     for attempt in range(count, count + 9999):
         candidate = f'WTI{str(attempt).zfill(4)}'
         if not TeacherProfile.objects.filter(staff_id=candidate).exists():
             return candidate
-    # Absolute fallback: random alphanumeric suffix
     while True:
         suffix = ''.join(random.choices(string.digits, k=6))
         candidate = f'WTI{suffix}'
         if not TeacherProfile.objects.filter(staff_id=candidate).exists():
             return candidate
+
+
+# ─── Admin Profile (tracks superadmin vs admin) ───────────────────────────────
+
+class AdminProfile(models.Model):
+    ROLE_CHOICES = [
+        ('superadmin', 'Super Admin'),
+        ('admin', 'Admin'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='admin_profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='admin')
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='created_admins'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
+
+    @property
+    def is_superadmin(self):
+        return self.role == 'superadmin'
 
 
 # ─── Teacher Profile ─────────────────────────────────────────────────────────

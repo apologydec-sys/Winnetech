@@ -17,7 +17,7 @@ from django.core.files.base import ContentFile
 
 from .models import (
     TeacherProfile, Attendance, QRCode, Notification, ChatMessage,
-    TimetableEntry, ClassSchedule
+    TimetableEntry, ClassSchedule, AdminProfile
 )
 from .forms import (
     TeacherRegistrationForm, TeacherLoginForm, AdminLoginForm,
@@ -28,6 +28,15 @@ from .forms import (
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff
+
+
+def is_superadmin(user):
+    if not user.is_authenticated or not user.is_staff:
+        return False
+    try:
+        return user.admin_profile.role == 'superadmin'
+    except Exception:
+        return user.is_superuser
 
 
 # ─── Welcome Page ─────────────────────────────────────────────────────────────
@@ -709,3 +718,78 @@ def view_timetable(request):
         'all_notifications': all_notifications,
         'unread_notifications': unread_notifications,
     })
+
+
+# ─── Super Admin ──────────────────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_superadmin)
+def superadmin_dashboard(request):
+    admins = User.objects.filter(is_staff=True).select_related('admin_profile')
+    teachers = TeacherProfile.objects.select_related('user').all()
+    return render(request, 'superadmin/dashboard.html', {
+        'admins': admins,
+        'teachers': teachers,
+        'total_admins': admins.count(),
+        'total_teachers': teachers.count(),
+    })
+
+
+@login_required
+@user_passes_test(is_superadmin)
+def superadmin_create_admin(request):
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+
+        if not username or not password:
+            error = 'Username and password are required.'
+        elif User.objects.filter(username=username).exists():
+            error = f'Username "{username}" already exists.'
+        else:
+            new_user = User.objects.create_user(
+                username=username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                is_staff=True,
+                is_active=True,
+            )
+            AdminProfile.objects.create(
+                user=new_user,
+                role='admin',
+                created_by=request.user,
+            )
+            messages.success(request, f'Admin "{username}" created successfully.')
+            return redirect('superadmin_dashboard')
+
+    return render(request, 'superadmin/create_admin.html', {'error': error})
+
+
+@login_required
+@user_passes_test(is_superadmin)
+def superadmin_delete_admin(request, admin_id):
+    admin_user = get_object_or_404(User, id=admin_id, is_staff=True)
+    # Prevent deleting yourself or other superadmins
+    if admin_user == request.user:
+        messages.error(request, 'You cannot delete your own account.')
+        return redirect('superadmin_dashboard')
+    try:
+        if admin_user.admin_profile.role == 'superadmin':
+            messages.error(request, 'Cannot delete another Super Admin.')
+            return redirect('superadmin_dashboard')
+    except Exception:
+        pass
+
+    if request.method == 'POST':
+        name = admin_user.get_full_name() or admin_user.username
+        admin_user.delete()
+        messages.success(request, f'Admin "{name}" deleted.')
+        return redirect('superadmin_dashboard')
+
+    return render(request, 'superadmin/confirm_delete_admin.html', {'admin_user': admin_user})

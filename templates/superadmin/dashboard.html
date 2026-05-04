@@ -1,0 +1,76 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+{% block title %}Super Admin — WTI{% endblock %}
+{% block page_title %}Super Admin Control Panel{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-user-shield"></i></div>
+      <div class="stat-info"><h3>{{ total_admins }}</h3><p>Total Admins</p></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="stat-info"><h3>{{ total_teachers }}</h3><p>Total Teachers</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="wti-card">
+  <div class="wti-card-header">
+    <h5><i class="fas fa-user-shield"></i> Admin Accounts</h5>
+    <a href="{% url 'superadmin_create_admin' %}" class="btn-gold px-3 py-2 rounded-3" style="font-size:.85rem">
+      <i class="fas fa-plus me-1"></i> Create Admin
+    </a>
+  </div>
+  <div class="wti-card-body p-0">
+    <div class="table-responsive">
+      <table class="wti-table">
+        <thead>
+          <tr><th>Admin</th><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for a in admins %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="teacher-avatar" style="background:linear-gradient(135deg,#003087,#0047b3)">
+                  {{ a.first_name|first|upper }}{{ a.last_name|first|upper }}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:.88rem">{{ a.get_full_name|default:a.username }}</div>
+                  <small class="text-muted">{{ a.email }}</small>
+                </div>
+              </div>
+            </td>
+            <td><code>{{ a.username }}</code></td>
+            <td style="font-size:.82rem">{{ a.email }}</td>
+            <td>
+              {% if a.admin_profile.role == 'superadmin' %}
+                <span class="status-badge" style="background:rgba(0,48,135,.12);color:#003087"><i class="fas fa-crown me-1"></i>Super Admin</span>
+              {% else %}
+                <span class="status-badge approved"><i class="fas fa-user-shield me-1"></i>Admin</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if a != request.user %}
+              <a href="{% url 'superadmin_delete_admin' a.id %}" class="btn btn-sm btn-danger rounded-pill" style="font-size:.75rem">
+                <i class="fas fa-trash me-1"></i>Delete
+              </a>
+              {% else %}
+              <span class="text-muted" style="font-size:.78rem">You</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No admins found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

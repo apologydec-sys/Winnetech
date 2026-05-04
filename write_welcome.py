@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+T = r"""{% extends 'base.html' %}
 {% load static %}
 {% block title %}Winneba Technical Institute — Teachers Management Record System{% endblock %}
 
@@ -171,3 +171,7 @@ body{font-family:'Poppins',sans-serif;background:var(--school-blue-dark);overflo
 </script>
 {% endblock %}
 {% block extra_js %}<script src="{% static 'js/pwa.js' %}"></script>{% endblock %}
+"""
+with open('templates/welcome.html', 'w', encoding='utf-8') as f:
+    f.write(T)
+print('welcome.html written')

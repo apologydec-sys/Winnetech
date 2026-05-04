@@ -44,4 +44,9 @@ urlpatterns = [
     path('api/notifications/', views.get_notifications_api, name='notifications_api'),
     path('api/schedule-reminders/', views.get_schedule_reminders_api, name='schedule_reminders_api'),
     path('api/schedule/<int:schedule_id>/complete/', views.mark_schedule_complete, name='mark_schedule_complete'),
+
+    # Super Admin
+    path('superadmin/', views.superadmin_dashboard, name='superadmin_dashboard'),
+    path('superadmin/create-admin/', views.superadmin_create_admin, name='superadmin_create_admin'),
+    path('superadmin/delete-admin/<int:admin_id>/', views.superadmin_delete_admin, name='superadmin_delete_admin'),
 ]
