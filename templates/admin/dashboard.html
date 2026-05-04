@@ -1,0 +1,221 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard — WTI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block mob_dashboard %}active{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="stat-info">
+        <h3>{{ total_teachers }}</h3>
+        <p>Total Teachers</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+      <div class="stat-info">
+        <h3>{{ present_count }}</h3>
+        <p>Present Today</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-user-times"></i></div>
+      <div class="stat-info">
+        <h3>{{ absent_count }}</h3>
+        <p>Absent Today</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <h3>{{ pending_teachers.count }}</h3>
+        <p>Pending Approval</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Today's Attendance -->
+  <div class="col-lg-8">
+    <div class="wti-card mb-3">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-clipboard-check"></i> Today's Attendance — {{ today }}</h5>
+        <a href="{% url 'admin_attendance' %}" class="btn-outline-gold" style="font-size:0.8rem">View All</a>
+      </div>
+      <div class="wti-card-body p-0">
+        <div class="table-responsive">
+          <table class="wti-table">
+            <thead>
+              <tr>
+                <th>Teacher</th>
+                <th>Check In</th>
+                <th>Lesson Done</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for att in today_attendance %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="teacher-avatar">
+                      {% if att.teacher.profile_photo %}
+                        <img src="{{ att.teacher.profile_photo.url }}" alt="">
+                      {% else %}
+                        {{ att.teacher.user.first_name|first }}{{ att.teacher.user.last_name|first }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div style="font-weight:600;font-size:0.88rem">{{ att.teacher.full_name }}</div>
+                      <small class="text-muted">{{ att.teacher.staff_id }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ att.check_in_time|default:"—" }}</td>
+                <td>{{ att.lesson_done_time|default:"—" }}</td>
+                <td>
+                  <span class="status-badge {{ att.status }}">
+                    <i class="fas fa-circle" style="font-size:0.5rem"></i>
+                    {{ att.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-4">No attendance records yet today</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Timetable -->
+    <div class="wti-card">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-calendar-day"></i> Today's Timetable</h5>
+        <a href="{% url 'admin_timetable' %}" class="btn-outline-gold" style="font-size:0.8rem">Manage</a>
+      </div>
+      <div class="wti-card-body p-0">
+        <div class="table-responsive">
+          <table class="wti-table">
+            <thead>
+              <tr><th>Time</th><th>Subject</th><th>Teacher</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+              {% for entry in today_timetable %}
+              <tr>
+                <td style="font-size:0.82rem;color:#888">{{ entry.start_time|time:"H:i" }} – {{ entry.end_time|time:"H:i" }}</td>
+                <td>
+                  {% if entry.is_break %}
+                    <span class="text-muted"><i class="fas fa-coffee me-1"></i>{{ entry.subject }}</span>
+                  {% else %}
+                    <strong>{{ entry.subject }}</strong>
+                  {% endif %}
+                </td>
+                <td>{{ entry.teacher.full_name|default:"—" }}</td>
+                <td>
+                  {% if not entry.is_break %}
+                    <span class="status-badge {{ entry.course_type }}">{{ entry.get_course_type_display|default:"—" }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-3">No timetable entries for today</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-lg-4">
+    <!-- Active QR Code -->
+    <div class="wti-card mb-3">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-qrcode"></i> Today's QR Code</h5>
+        <a href="{% url 'generate_qr' %}" class="btn-outline-gold" style="font-size:0.8rem">Manage</a>
+      </div>
+      <div class="wti-card-body text-center">
+        {% if active_qr %}
+          {% if active_qr.qr_image %}
+            <img src="{{ active_qr.qr_image.url }}" alt="QR Code" style="max-width:180px;border-radius:10px;border:3px solid var(--gold)">
+          {% endif %}
+          <p class="mt-2 mb-1" style="font-size:0.85rem;font-weight:600">{{ active_qr.label }}</p>
+          <small class="text-muted">{{ active_qr.date }}</small>
+          <div class="mt-2">
+            <a href="{% url 'qr_detail' active_qr.id %}" class="btn-outline-gold" style="font-size:0.78rem">
+              <i class="fas fa-expand"></i> View Full
+            </a>
+          </div>
+        {% else %}
+          <div class="py-3">
+            <i class="fas fa-qrcode" style="font-size:3rem;color:#ddd"></i>
+            <p class="text-muted mt-2" style="font-size:0.85rem">No QR code for today</p>
+            <a href="{% url 'generate_qr' %}" class="btn-gold">Generate QR</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Pending Approvals -->
+    {% if pending_teachers %}
+    <div class="wti-card mb-3">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-user-clock"></i> Pending Approvals</h5>
+        <span class="badge bg-warning text-dark">{{ pending_teachers.count }}</span>
+      </div>
+      <div class="wti-card-body p-0">
+        {% for t in pending_teachers %}
+        <div class="d-flex align-items-center gap-2 p-3 border-bottom">
+          <div class="teacher-avatar">{{ t.user.first_name|first }}{{ t.user.last_name|first }}</div>
+          <div class="flex-grow-1">
+            <div style="font-size:0.85rem;font-weight:600">{{ t.full_name }}</div>
+            <small class="text-muted">{{ t.get_course_type_display }}</small>
+          </div>
+          <a href="{% url 'approve_teacher' t.id %}" class="btn btn-sm btn-success rounded-pill" style="font-size:0.75rem">Approve</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Notifications -->
+    <div class="wti-card">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-bell"></i> Recent Activity</h5>
+      </div>
+      <div class="wti-card-body p-0">
+        {% for notif in recent_notifications %}
+        <div class="notif-item {% if not notif.is_read %}unread{% endif %}">
+          <div class="notif-icon {{ notif.notification_type }}">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="notif-content">
+            <h6>{{ notif.title }}</h6>
+            <p>{{ notif.message|truncatechars:60 }}</p>
+            <small>{{ notif.created_at|timesince }} ago</small>
+          </div>
+        </div>
+        {% empty %}
+        <div class="p-3 text-center text-muted" style="font-size:0.85rem">No recent activity</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

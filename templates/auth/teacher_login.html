@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Login — WTI{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="{% static 'images/ChatGPT Image Apr 28, 2026, 10_01_09 AM.png' %}" alt="WTI Logo">
+      <h4>Teacher Login</h4>
+      <p>Winneba Technical Institute Staff System</p>
+    </div>
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} auto-dismiss alert-dismissible fade show" role="alert">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label"><i class="fas fa-user me-1" style="color:var(--gold)"></i> Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+      </div>
+      <div class="mb-4">
+        <label class="form-label"><i class="fas fa-lock me-1" style="color:var(--gold)"></i> Password</label>
+        <div class="position-relative">
+          <input type="password" name="password" id="teacherPass" class="form-control" placeholder="Enter your password" required>
+          <button type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent text-muted" onclick="togglePass('teacherPass')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-gold w-100 py-3 rounded-3">
+        <i class="fas fa-sign-in-alt me-2"></i> Login
+      </button>
+    </form>
+
+    <div class="auth-divider">or</div>
+
+    <div class="text-center">
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.5rem">Don't have an account?</p>
+      <a href="{% url 'teacher_register' %}" class="btn-outline-gold">
+        <i class="fas fa-user-plus"></i> Register as Teacher
+      </a>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="{% url 'welcome' %}" class="text-muted text-decoration-none" style="font-size:0.82rem">
+        <i class="fas fa-arrow-left me-1"></i> Back to Welcome Page
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePass(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/pwa.js' %}"></script>{% endblock %}

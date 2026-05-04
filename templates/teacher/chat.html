@@ -1,0 +1,72 @@
+{% extends 'teacher/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Chat — WTI{% endblock %}
+{% block page_title %}Chat with Admin{% endblock %}
+{% block nav_chat %}active{% endblock %}
+{% block mob_chat %}active{% endblock %}
+
+{% block extra_css %}
+<style>.page-content { padding-bottom: 0; }</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container" style="height:calc(100vh - 130px)">
+  <div class="chat-main">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="teacher-avatar" style="width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold-dark))">
+        {{ admin_user.first_name|first|upper }}{{ admin_user.last_name|first|upper }}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:0.95rem">{{ admin_user.get_full_name|default:admin_user.username }}</div>
+        <small class="text-muted">Administrator · WTI</small>
+      </div>
+      <a href="{% url 'teacher_dashboard' %}" class="btn btn-sm btn-outline-secondary ms-auto rounded-pill" style="font-size:0.8rem">
+        <i class="fas fa-arrow-left me-1"></i> Back
+      </a>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chatMessages">
+      {% for msg in messages %}
+      <div style="display:flex;flex-direction:column;align-items:{% if msg.sender == request.user %}flex-end{% else %}flex-start{% endif %}">
+        {% if msg.sender != request.user %}
+          <small style="font-size:0.72rem;color:#888;margin-bottom:2px;padding-left:4px">{{ msg.sender.get_full_name }}</small>
+        {% endif %}
+        <div class="message-bubble {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+          {{ msg.message }}
+          <span class="message-time">{{ msg.timestamp|time:"H:i" }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center text-muted py-4" style="font-size:0.85rem">
+        <i class="fas fa-comment-dots" style="font-size:2.5rem;color:#ddd"></i>
+        <p class="mt-2">Start a conversation with the admin</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-area">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+      <button class="chat-send-btn" id="chatSendBtn">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  window.CURRENT_USER_ID = {{ request.user.id }};
+  window.initChat(
+    '{{ room_name }}',
+    {{ request.user.id }},
+    {{ admin_user.id }},
+    wsProtocol + '//' + window.location.host + '/'
+  );
+</script>
+{% endblock %}

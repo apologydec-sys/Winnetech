@@ -1,0 +1,110 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Chat — WTI Admin{% endblock %}
+{% block page_title %}Chat with Teachers{% endblock %}
+{% block nav_chat %}active{% endblock %}
+{% block mob_chat %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content { padding-bottom: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container" style="height:calc(100vh - 130px)">
+  <!-- Teachers List -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <i class="fas fa-comments me-2" style="color:var(--gold)"></i> Teachers
+    </div>
+    <div style="overflow-y:auto;flex:1">
+      {% for t in teachers %}
+      <a href="{% url 'admin_chat_teacher' t.id %}"
+         class="chat-contact {% if selected_teacher and selected_teacher.id == t.id %}active{% endif %}">
+        <div class="teacher-avatar" style="width:38px;height:38px;flex-shrink:0">
+          {% if t.profile_photo %}
+            <img src="{{ t.profile_photo.url }}" alt="">
+          {% else %}
+            {{ t.user.first_name|first }}{{ t.user.last_name|first }}
+          {% endif %}
+        </div>
+        <div class="chat-contact-info">
+          <h6>{{ t.full_name }}</h6>
+          <small>{{ t.get_course_type_display }}</small>
+        </div>
+      </a>
+      {% empty %}
+      <div class="p-3 text-muted" style="font-size:0.82rem">No approved teachers yet</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-main">
+    {% if selected_teacher %}
+    <div class="chat-header">
+      <div class="teacher-avatar" style="width:40px;height:40px">
+        {% if selected_teacher.profile_photo %}
+          <img src="{{ selected_teacher.profile_photo.url }}" alt="">
+        {% else %}
+          {{ selected_teacher.user.first_name|first }}{{ selected_teacher.user.last_name|first }}
+        {% endif %}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:0.95rem">{{ selected_teacher.full_name }}</div>
+        <small class="text-muted">{{ selected_teacher.staff_id }} · {{ selected_teacher.get_course_type_display }}</small>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      {% for msg in messages %}
+      <div style="display:flex;flex-direction:column;align-items:{% if msg.sender == request.user %}flex-end{% else %}flex-start{% endif %}">
+        {% if msg.sender != request.user %}
+          <small style="font-size:0.72rem;color:#888;margin-bottom:2px;padding-left:4px">{{ msg.sender.get_full_name }}</small>
+        {% endif %}
+        <div class="message-bubble {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+          {{ msg.message }}
+          <span class="message-time">{{ msg.timestamp|time:"H:i" }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center text-muted py-4" style="font-size:0.85rem">
+        <i class="fas fa-comment-dots" style="font-size:2rem;color:#ddd"></i>
+        <p class="mt-2">Start a conversation with {{ selected_teacher.full_name }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="chat-input-area">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+      <button class="chat-send-btn" id="chatSendBtn">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+
+    {% else %}
+    <div class="d-flex align-items-center justify-content-center h-100 flex-column text-muted">
+      <i class="fas fa-comments" style="font-size:4rem;color:#ddd;margin-bottom:1rem"></i>
+      <p style="font-size:0.95rem">Select a teacher to start chatting</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if selected_teacher and room_name %}
+<script>
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  window.CURRENT_USER_ID = {{ request.user.id }};
+  window.initChat(
+    '{{ room_name }}',
+    {{ request.user.id }},
+    {{ selected_teacher.user.id }},
+    wsProtocol + '//' + window.location.host + '/'
+  );
+</script>
+{% endif %}
+{% endblock %}
