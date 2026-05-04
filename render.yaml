@@ -2,7 +2,7 @@ services:
   - type: web
     name: winnitech-staff-system
     env: python
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate && python setup_data.py"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate && python manage.py create_admin"
     startCommand: "daphne -b 0.0.0.0 -p $PORT winnitech.asgi:application"
     envVars:
       - key: SECRET_KEY
