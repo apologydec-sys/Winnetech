@@ -22,7 +22,7 @@ ADMIN_PASSWORD = 'Winnitech@2026#Admin'
 ADMIN_EMAIL    = 'admin@winnitech.edu.gh'
 
 if not User.objects.filter(username=ADMIN_USERNAME).exists():
-    User.objects.create_superuser(
+    admin = User.objects.create_superuser(
         username=ADMIN_USERNAME,
         email=ADMIN_EMAIL,
         password=ADMIN_PASSWORD,

@@ -121,20 +121,24 @@ def teacher_login(request):
 def admin_login(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('admin_dashboard')
+    error = None
     if request.method == 'POST':
-        form = AdminLoginForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            if not user.is_staff:
-                messages.error(request, 'You do not have admin privileges.')
-                return redirect('admin_login')
-            login(request, user)
-            return redirect('admin_dashboard')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        if not username or not password:
+            error = 'Please enter both username and password.'
         else:
-            messages.error(request, 'Invalid admin credentials.')
-    else:
-        form = AdminLoginForm()
-    return render(request, 'auth/admin_login.html', {'form': form})
+            user = authenticate(request, username=username, password=password)
+            if user is None:
+                error = 'Invalid username or password.'
+            elif not user.is_staff:
+                error = 'This account does not have admin privileges.'
+            elif not user.is_active:
+                error = 'This account is disabled.'
+            else:
+                login(request, user)
+                return redirect('admin_dashboard')
+    return render(request, 'auth/admin_login.html', {'error': error})
 
 
 def logout_view(request):
