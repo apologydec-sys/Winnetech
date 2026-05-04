@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from .models import (
     TeacherProfile, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS,
     DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES,
-    QUALIFICATION_CHOICES, TimetableEntry, Notification, ChatMessage,
+    QUALIFICATION_CHOICES, TimetableEntry, Notification,
     QRCode, ClassSchedule
 )
 
@@ -239,24 +239,11 @@ class ClassScheduleForm(forms.ModelForm):
         }
 
 
-class ChatMessageForm(forms.ModelForm):
-    class Meta:
-        model = ChatMessage
-        fields = ['message']
-        widgets = {
-            'message': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Type a message...',
-                'autocomplete': 'off',
-            }),
-        }
-
-
 class QRCodeForm(forms.ModelForm):
     class Meta:
         model = QRCode
-        fields = ['label', 'date']
+        fields = ['qr_type', 'label']
         widgets = {
-            'label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'QR Code Label'}),
-            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'qr_type': forms.Select(attrs={'class': 'form-select'}),
+            'label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Main Gate QR / Classroom QR'}),
         }

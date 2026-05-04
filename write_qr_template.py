@@ -1,4 +1,4 @@
-{% extends 'admin/base_admin.html' %}
+T = """{% extends 'admin/base_admin.html' %}
 {% load static %}
 {% block title %}QR Attendance — WTI{% endblock %}
 {% block page_title %}QR Code Management{% endblock %}
@@ -95,3 +95,7 @@
   </div>
 </div>
 {% endblock %}
+"""
+with open('templates/admin/qr_generate.html', 'w', encoding='utf-8') as f:
+    f.write(T)
+print('qr_generate.html written')

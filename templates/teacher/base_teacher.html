@@ -51,13 +51,6 @@
       <a href="{% url 'qr_scanner' %}" class="sidebar-link {% block nav_scanner %}{% endblock %}">
         <i class="fas fa-camera"></i> QR Scanner
       </a>
-
-      <div class="nav-section-title">Communication</div>
-      {% for admin in admins %}
-      <a href="{% url 'teacher_chat' admin.id %}" class="sidebar-link {% block nav_chat %}{% endblock %}">
-        <i class="fas fa-comments"></i> Chat with Admin
-      </a>
-      {% endfor %}
     </nav>
 
     <div class="sidebar-footer">
@@ -171,13 +164,10 @@
     </div>
     <span>Scan QR</span>
   </a>
-  {% for admin in admins %}
-  <a href="{% url 'teacher_chat' admin.id %}" class="{% block mob_chat %}{% endblock %}" aria-label="Chat">
-    <i class="fas fa-comments"></i>
-    <span>Chat</span>
-    {% if unread_notifications %}<span class="nav-badge">{{ unread_notifications }}</span>{% endif %}
+  <a href="{% url 'view_timetable' %}" aria-label="Schedule">
+    <i class="fas fa-calendar-check"></i>
+    <span>Schedule</span>
   </a>
-  {% endfor %}
   <a href="{% url 'logout' %}" aria-label="Logout" style="color:#dc3545">
     <i class="fas fa-sign-out-alt"></i>
     <span>Logout</span>

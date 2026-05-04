@@ -1,4 +1,4 @@
-from django.urls import path
+content = """from django.urls import path
 from . import views
 
 urlpatterns = [
@@ -40,3 +40,7 @@ urlpatterns = [
     path('superadmin/teachers/<int:teacher_id>/approve/', views.superadmin_approve_teacher, name='superadmin_approve_teacher'),
     path('superadmin/teachers/<int:teacher_id>/delete/', views.superadmin_delete_teacher, name='superadmin_delete_teacher'),
 ]
+"""
+with open('core/urls.py', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('urls.py written')

@@ -1,0 +1,49 @@
+{% extends 'superadmin/base_superadmin.html' %}
+{% block title %}Manage Admins — WTI{% endblock %}
+{% block page_title %}Manage Admin Accounts{% endblock %}
+{% block nav_admins %}active{% endblock %}
+{% block content %}
+<div class="sa-card">
+  <div class="sa-card-header">
+    <h5><i class="fas fa-user-shield"></i> All Admin Accounts ({{ admins.count }})</h5>
+    <a href="{% url 'superadmin_create_admin' %}" style="background:linear-gradient(135deg,#003087,#0047b3);color:#fff;border:none;border-radius:10px;padding:.5rem 1.2rem;font-size:.83rem;font-weight:700;text-decoration:none"><i class="fas fa-plus me-1"></i> Create Admin</a>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:#f8f9fa">
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Admin</th>
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Username</th>
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Email</th>
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Role</th>
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Action</th>
+      </tr></thead>
+      <tbody>
+        {% for a in admins %}
+        <tr style="border-bottom:1px solid #f0f2f5">
+          <td style="padding:.9rem 1rem">
+            <div style="display:flex;align-items:center;gap:.7rem">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#003087,#0047b3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;flex-shrink:0">{{ a.first_name|first|upper }}{{ a.last_name|first|upper }}</div>
+              <div><div style="font-weight:600;font-size:.87rem">{{ a.get_full_name|default:a.username }}</div></div>
+            </div>
+          </td>
+          <td style="padding:.9rem 1rem"><code style="font-size:.82rem">{{ a.username }}</code></td>
+          <td style="padding:.9rem 1rem;font-size:.82rem;color:#666">{{ a.email|default:"—" }}</td>
+          <td style="padding:.9rem 1rem">
+            {% if a.admin_profile.role == 'superadmin' %}
+              <span style="background:rgba(0,48,135,.1);color:#003087;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:20px"><i class="fas fa-crown me-1"></i>Super Admin</span>
+            {% else %}
+              <span style="background:rgba(40,167,69,.1);color:#28a745;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:20px"><i class="fas fa-user-shield me-1"></i>Admin</span>
+            {% endif %}
+          </td>
+          <td style="padding:.9rem 1rem">
+            {% if a != request.user and a.admin_profile.role != 'superadmin' %}
+            <a href="{% url 'superadmin_delete_admin' a.id %}" style="background:#dc3545;color:#fff;border:none;border-radius:8px;padding:4px 12px;font-size:.75rem;font-weight:600;text-decoration:none"><i class="fas fa-trash me-1"></i>Delete</a>
+            {% else %}<span style="color:#ccc;font-size:.78rem">Protected</span>{% endif %}
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="5" style="text-align:center;padding:2rem;color:#888;font-size:.85rem">No admins found</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'admin/base_admin.html' %}
+T = """{% extends 'admin/base_admin.html' %}
 {% load static %}
 {% block title %}Admin Dashboard — WTI{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -185,3 +185,7 @@
   </div>
 </div>
 {% endblock %}
+"""
+with open('templates/admin/dashboard.html', 'w', encoding='utf-8') as f:
+    f.write(T)
+print('admin dashboard written')

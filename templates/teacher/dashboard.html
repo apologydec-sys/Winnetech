@@ -35,21 +35,23 @@
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
     <div class="stat-card">
-      <div class="stat-icon {% if today_attendance and today_attendance.status == 'present' %}green{% else %}red{% endif %}">
-        <i class="fas fa-{% if today_attendance and today_attendance.status == 'present' %}check-circle{% else %}times-circle{% endif %}"></i>
+      <div class="stat-icon {% if today_att and today_att.school_status == 'present' %}green{% else %}red{% endif %}">
+        <i class="fas fa-{% if today_att and today_att.school_status == 'present' %}check-circle{% else %}times-circle{% endif %}"></i>
       </div>
       <div class="stat-info">
-        <h3 style="font-size:1.1rem">{% if today_attendance and today_attendance.status == 'present' %}Present{% else %}Absent{% endif %}</h3>
-        <p>Today's Status</p>
+        <h3 style="font-size:1.1rem">{% if today_att and today_att.school_status == 'present' %}Present{% else %}Absent{% endif %}</h3>
+        <p>School Status</p>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="stat-card">
-      <div class="stat-icon gold"><i class="fas fa-clock"></i></div>
+      <div class="stat-icon {% if today_att and today_att.lesson_status == 'done' %}blue{% else %}gold{% endif %}">
+        <i class="fas fa-book"></i>
+      </div>
       <div class="stat-info">
-        <h3 style="font-size:1.1rem">{{ today_attendance.check_in_time|default:"—" }}</h3>
-        <p>Check In Time</p>
+        <h3 style="font-size:1.1rem">{% if today_att and today_att.lesson_status == 'done' %}Done{% else %}Pending{% endif %}</h3>
+        <p>Lesson Status</p>
       </div>
     </div>
   </div>
@@ -149,34 +151,44 @@
         <h5><i class="fas fa-qrcode"></i> QR Attendance</h5>
       </div>
       <div class="wti-card-body text-center">
-        {% if today_attendance %}
-          {% if today_attendance.lesson_done_time %}
-          <div class="py-3">
-            <i class="fas fa-check-circle" style="font-size:3rem;color:var(--success)"></i>
-            <h6 class="mt-2" style="color:var(--success)">Lesson Completed!</h6>
-            <p class="text-muted" style="font-size:0.85rem">
-              Checked in: {{ today_attendance.check_in_time }}<br>
-              Lesson done: {{ today_attendance.lesson_done_time }}
-            </p>
+        {% if today_att %}
+          <div class="row g-2">
+            <div class="col-6">
+              <div style="background:#f8f9fa;border-radius:12px;padding:1rem;border:2px solid {% if today_att.school_status == 'present' %}#28a745{% else %}#e8ecf0{% endif %}">
+                <i class="fas fa-school" style="font-size:1.8rem;color:{% if today_att.school_status == 'present' %}#28a745{% else %}#ddd{% endif %}"></i>
+                <div style="font-size:.82rem;font-weight:700;margin-top:.4rem;color:{% if today_att.school_status == 'present' %}#28a745{% else %}#888{% endif %}">
+                  {% if today_att.school_status == 'present' %}✓ Present{% else %}Absent{% endif %}
+                </div>
+                <div style="font-size:.72rem;color:#888">School: {{ today_att.check_in_time|default:"Not scanned" }}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div style="background:#f8f9fa;border-radius:12px;padding:1rem;border:2px solid {% if today_att.lesson_status == 'done' %}#003087{% else %}#e8ecf0{% endif %}">
+                <i class="fas fa-book" style="font-size:1.8rem;color:{% if today_att.lesson_status == 'done' %}#003087{% else %}#ddd{% endif %}"></i>
+                <div style="font-size:.82rem;font-weight:700;margin-top:.4rem;color:{% if today_att.lesson_status == 'done' %}#003087{% else %}#888{% endif %}">
+                  {% if today_att.lesson_status == 'done' %}✓ Done{% else %}Pending{% endif %}
+                </div>
+                <div style="font-size:.72rem;color:#888">Lesson: {{ today_att.lesson_done_time|default:"Not scanned" }}</div>
+              </div>
+            </div>
           </div>
-          {% else %}
-          <div class="py-3">
-            <i class="fas fa-check-circle" style="font-size:3rem;color:var(--accent)"></i>
-            <h6 class="mt-2" style="color:var(--accent)">Checked In at {{ today_attendance.check_in_time }}</h6>
-            <p class="text-muted" style="font-size:0.85rem">Scan QR again when your lesson is done</p>
-            <a href="{% url 'qr_scanner' %}" class="btn-gold px-4 py-2 rounded-3 mt-2 d-inline-block">
-              <i class="fas fa-camera me-2"></i> Scan QR (Lesson Done)
-            </a>
+          <div class="mt-3 d-flex gap-2 justify-content-center flex-wrap">
+            {% if today_att.school_status != 'present' %}
+            <a href="{% url 'qr_scanner' %}" class="btn-gold px-3 py-2 rounded-3" style="font-size:.82rem"><i class="fas fa-camera me-1"></i> Scan School QR</a>
+            {% endif %}
+            {% if today_att.lesson_status != 'done' %}
+            <a href="{% url 'qr_scanner' %}" class="btn-outline-gold px-3 py-2 rounded-3" style="font-size:.82rem"><i class="fas fa-book me-1"></i> Scan Lesson QR</a>
+            {% endif %}
           </div>
-          {% endif %}
         {% else %}
         <div class="py-3">
           <i class="fas fa-qrcode" style="font-size:3rem;color:#ddd"></i>
           <h6 class="mt-2 text-muted">Not checked in yet</h6>
-          <p class="text-muted" style="font-size:0.85rem">Scan the QR code on the classroom wall to mark attendance</p>
-          <a href="{% url 'qr_scanner' %}" class="btn-gold px-4 py-2 rounded-3 mt-2 d-inline-block">
-            <i class="fas fa-camera me-2"></i> Open QR Scanner
-          </a>
+          <p class="text-muted" style="font-size:.83rem">Scan the QR codes on the classroom wall</p>
+          <div class="d-flex gap-2 justify-content-center flex-wrap mt-2">
+            <a href="{% url 'qr_scanner' %}" class="btn-gold px-3 py-2 rounded-3" style="font-size:.82rem"><i class="fas fa-school me-1"></i> School QR</a>
+            <a href="{% url 'qr_scanner' %}" class="btn-outline-gold px-3 py-2 rounded-3" style="font-size:.82rem"><i class="fas fa-book me-1"></i> Lesson QR</a>
+          </div>
         </div>
         {% endif %}
       </div>
@@ -189,16 +201,12 @@
     <div class="wti-card mb-3">
       <div class="wti-card-header">
         <h5><i class="fas fa-bell"></i> Notifications</h5>
-        {% if unread_notifications %}
-          <span class="badge bg-danger">{{ unread_notifications }}</span>
-        {% endif %}
+        {% if unread_notifications %}<span class="badge bg-danger">{{ unread_notifications }}</span>{% endif %}
       </div>
-      <div class="wti-card-body p-0" style="max-height:300px;overflow-y:auto">
+      <div class="wti-card-body p-0" style="max-height:350px;overflow-y:auto">
         {% for notif in all_notifications %}
         <div class="notif-item {% if not notif.is_read %}unread{% endif %}">
-          <div class="notif-icon {{ notif.notification_type }}">
-            <i class="fas fa-bell"></i>
-          </div>
+          <div class="notif-icon {{ notif.notification_type }}"><i class="fas fa-bell"></i></div>
           <div class="notif-content">
             <h6>{{ notif.title }}</h6>
             <p>{{ notif.message|truncatechars:70 }}</p>
@@ -206,30 +214,7 @@
           </div>
         </div>
         {% empty %}
-        <div class="p-3 text-center text-muted" style="font-size:0.85rem">No notifications</div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Quick Chat -->
-    <div class="wti-card">
-      <div class="wti-card-header">
-        <h5><i class="fas fa-comments"></i> Chat with Admin</h5>
-      </div>
-      <div class="wti-card-body">
-        {% for admin in admins %}
-        <a href="{% url 'teacher_chat' admin.id %}" class="chat-contact" style="border-radius:10px;border:1px solid #f0f2f5">
-          <div class="teacher-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-dark))">
-            {{ admin.first_name|first|upper }}{{ admin.last_name|first|upper }}
-          </div>
-          <div class="chat-contact-info">
-            <h6>{{ admin.get_full_name|default:admin.username }}</h6>
-            <small>Administrator</small>
-          </div>
-          <i class="fas fa-chevron-right text-muted ms-auto"></i>
-        </a>
-        {% empty %}
-        <p class="text-muted text-center" style="font-size:0.85rem">No admins available</p>
+        <div class="p-3 text-center text-muted" style="font-size:.85rem">No notifications</div>
         {% endfor %}
       </div>
     </div>

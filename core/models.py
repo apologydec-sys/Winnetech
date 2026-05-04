@@ -4,6 +4,7 @@ from django.utils import timezone
 import uuid
 import random
 import string
+from datetime import date
 
 
 # ─── Subject / Course Choices ────────────────────────────────────────────────
@@ -18,36 +19,27 @@ ELECTIVE_SUBJECTS = [
 ]
 
 DEPARTMENT_SUBJECTS = [
-    # Information Technology
     ('computer_system_servicing', 'Computer System & Servicing'),
     ('workshop_practice_power', 'Workshop Practice & Power Management'),
     ('networking_data_comm', 'Networking & Data Communication'),
-    # Plumbing
     ('plumbing_general', 'Plumbing (General)'),
     ('plumbing_installation', 'Plumbing Installation'),
     ('plumbing_maintenance', 'Plumbing Maintenance'),
-    # Electricals
     ('electrical_installation', 'Electrical Installation'),
     ('electrical_maintenance', 'Electrical Maintenance'),
     ('electrical_wiring', 'Electrical Wiring'),
-    # Welding & Fabrication
     ('welding_fabrication', 'Welding & Fabrication'),
     ('metal_work', 'Metal Work'),
-    # Fashion
     ('fashion_design', 'Fashion Design'),
     ('garment_construction', 'Garment Construction'),
     ('textile_studies', 'Textile Studies'),
-    # Catering
     ('catering_general', 'Catering (General)'),
     ('food_beverage', 'Food & Beverage'),
     ('hospitality', 'Hospitality Management'),
-    # Mechanical Engineering
     ('mechanical_engineering', 'Mechanical Engineering'),
     ('machine_maintenance', 'Machine Maintenance'),
-    # Auto Mechanics
     ('auto_mechanics', 'Auto Mechanics'),
     ('auto_electrical', 'Auto Electrical'),
-    # Building & Construction
     ('building_construction', 'Building & Construction'),
     ('masonry', 'Masonry'),
     ('carpentry', 'Carpentry'),
@@ -66,7 +58,7 @@ DEPARTMENT_CHOICES = [
 ]
 
 COURSE_TYPE_CHOICES = [
-    ('electives', 'Electives'),
+    ('core', 'Core Subjects'),
     ('departmental', 'Departmental'),
 ]
 
@@ -88,7 +80,6 @@ QUALIFICATION_CHOICES = [
 
 
 def generate_unique_staff_id():
-    """Generate a guaranteed-unique staff ID like WTI0001, WTI0002 …"""
     count = TeacherProfile.objects.count() + 1
     for attempt in range(count, count + 9999):
         candidate = f'WTI{str(attempt).zfill(4)}'
@@ -101,7 +92,7 @@ def generate_unique_staff_id():
             return candidate
 
 
-# ─── Admin Profile (tracks superadmin vs admin) ───────────────────────────────
+# ─── Admin Profile ────────────────────────────────────────────────────────────
 
 class AdminProfile(models.Model):
     ROLE_CHOICES = [
@@ -139,19 +130,12 @@ class TeacherProfile(models.Model):
     years_of_experience = models.PositiveIntegerField(default=0)
     previous_school = models.CharField(max_length=200, blank=True)
     bio = models.TextField(blank=True)
-
-    # Course preference
     course_type = models.CharField(max_length=20, choices=COURSE_TYPE_CHOICES)
     preferred_subject = models.CharField(max_length=100)
-    # department stored as free text so any value is accepted without choices validation
     department = models.CharField(max_length=100, blank=True)
-
-    # Documents
     cv_document = models.FileField(upload_to='documents/cv/', null=True, blank=True)
     certificate_document = models.FileField(upload_to='documents/certificates/', null=True, blank=True)
     id_document = models.FileField(upload_to='documents/ids/', null=True, blank=True)
-
-    # Status
     is_approved = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     emergency_contact = models.CharField(max_length=100, blank=True)
@@ -169,28 +153,44 @@ class TeacherProfile(models.Model):
     def full_name(self):
         return self.user.get_full_name() or self.user.username
 
-    def get_department_display_name(self):
-        dept_map = dict(DEPARTMENT_CHOICES)
-        return dept_map.get(self.department, self.department)
 
-
-# ─── Attendance ───────────────────────────────────────────────────────────────
+# ─── QR Code — Two types: school_attendance and lesson ───────────────────────
 
 class QRCode(models.Model):
+    QR_TYPE_CHOICES = [
+        ('school_attendance', 'School Attendance'),
+        ('lesson', 'Lesson'),
+    ]
     code = models.UUIDField(default=uuid.uuid4, unique=True)
+    qr_type = models.CharField(max_length=20, choices=QR_TYPE_CHOICES, default='school_attendance')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='qr_codes')
     created_at = models.DateTimeField(auto_now_add=True)
-    date = models.DateField(default=timezone.localdate)
+    # Valid for 5 years from creation
+    valid_from = models.DateField(default=date.today)
+    valid_until = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     qr_image = models.ImageField(upload_to='qrcodes/', null=True, blank=True)
-    label = models.CharField(max_length=100, default='Daily Attendance QR')
+    label = models.CharField(max_length=100, default='School Attendance QR')
+
+    def save(self, *args, **kwargs):
+        if not self.valid_until:
+            from datetime import timedelta
+            self.valid_until = self.valid_from.replace(year=self.valid_from.year + 5)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_valid_today(self):
+        today = date.today()
+        return self.is_active and self.valid_from <= today <= self.valid_until
 
     def __str__(self):
-        return f"QR Code - {self.date} ({self.label})"
+        return f"{self.get_qr_type_display()} QR — {self.label}"
 
     class Meta:
         ordering = ['-created_at']
 
+
+# ─── Attendance ───────────────────────────────────────────────────────────────
 
 class Attendance(models.Model):
     STATUS_CHOICES = [
@@ -198,18 +198,31 @@ class Attendance(models.Model):
         ('absent', 'Absent'),
         ('late', 'Late'),
     ]
-    SCAN_TYPE_CHOICES = [
-        ('check_in', 'Check In'),
-        ('lesson_done', 'Lesson Done'),
+    LESSON_STATUS_CHOICES = [
+        ('done', 'Lesson Done'),
+        ('not_done', 'Lesson Not Done'),
+        ('pending', 'Pending'),
     ]
 
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='attendances')
-    qr_code = models.ForeignKey(QRCode, on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateField(default=timezone.localdate)
+
+    # School attendance (scan school QR)
+    school_qr = models.ForeignKey(
+        QRCode, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='school_attendances'
+    )
+    school_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='absent')
     check_in_time = models.TimeField(null=True, blank=True)
+
+    # Lesson attendance (scan lesson QR)
+    lesson_qr = models.ForeignKey(
+        QRCode, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='lesson_attendances'
+    )
+    lesson_status = models.CharField(max_length=10, choices=LESSON_STATUS_CHOICES, default='pending')
     lesson_done_time = models.TimeField(null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='absent')
-    scan_type = models.CharField(max_length=20, choices=SCAN_TYPE_CHOICES, default='check_in')
+
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -217,7 +230,7 @@ class Attendance(models.Model):
         ordering = ['-date', 'teacher']
 
     def __str__(self):
-        return f"{self.teacher.full_name} - {self.date} - {self.status}"
+        return f"{self.teacher.full_name} — {self.date} — School:{self.school_status} Lesson:{self.lesson_status}"
 
 
 # ─── Timetable ────────────────────────────────────────────────────────────────
@@ -230,7 +243,6 @@ class TimetableEntry(models.Model):
         ('thursday', 'Thursday'),
         ('friday', 'Friday'),
     ]
-
     day = models.CharField(max_length=10, choices=DAY_CHOICES)
     subject = models.CharField(max_length=100)
     start_time = models.TimeField()
@@ -247,7 +259,7 @@ class TimetableEntry(models.Model):
         ordering = ['day', 'start_time']
 
     def __str__(self):
-        return f"{self.day} - {self.subject} ({self.start_time}-{self.end_time})"
+        return f"{self.day} — {self.subject} ({self.start_time}–{self.end_time})"
 
 
 # ─── Notifications ────────────────────────────────────────────────────────────
@@ -258,10 +270,8 @@ class Notification(models.Model):
         ('schedule', 'Schedule'),
         ('reminder', 'Class Reminder'),
         ('general', 'General'),
-        ('chat', 'Chat'),
         ('admin', 'Admin Notice'),
     ]
-
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
     title = models.CharField(max_length=200)
@@ -276,23 +286,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"To {self.recipient.username}: {self.title}"
-
-
-# ─── Chat ─────────────────────────────────────────────────────────────────────
-
-class ChatMessage(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-    attachment = models.FileField(upload_to='chat_attachments/', null=True, blank=True)
-
-    class Meta:
-        ordering = ['timestamp']
-
-    def __str__(self):
-        return f"{self.sender.username} → {self.recipient.username}: {self.message[:50]}"
 
 
 # ─── Class Schedule ───────────────────────────────────────────────────────────
@@ -311,4 +304,4 @@ class ClassSchedule(models.Model):
         ordering = ['scheduled_date', 'timetable_entry__start_time']
 
     def __str__(self):
-        return f"{self.teacher.full_name} - {self.timetable_entry.subject} on {self.scheduled_date}"
+        return f"{self.teacher.full_name} — {self.timetable_entry.subject} on {self.scheduled_date}"

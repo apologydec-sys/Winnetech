@@ -65,9 +65,6 @@
       <a href="{% url 'admin_notifications' %}" class="sidebar-link {% block nav_notif %}{% endblock %}">
         <i class="fas fa-bell"></i> Notifications
       </a>
-      <a href="{% url 'admin_chat' %}" class="sidebar-link {% block nav_chat %}{% endblock %}">
-        <i class="fas fa-comments"></i> Chat
-      </a>
 
       <div class="nav-section-title">QR Code</div>
       <a href="{% url 'generate_qr' %}" class="sidebar-link {% block nav_qr %}{% endblock %}">
@@ -76,13 +73,6 @@
       <a href="{% url 'qr_scanner' %}" class="sidebar-link">
         <i class="fas fa-camera"></i> QR Scanner
       </a>
-
-      {% if request.user.is_superuser %}
-      <div class="nav-section-title">Super Admin</div>
-      <a href="{% url 'superadmin_dashboard' %}" class="sidebar-link" style="color:rgba(255,215,0,0.85)">
-        <i class="fas fa-crown"></i> Super Admin Panel
-      </a>
-      {% endif %}
     </nav>
 
     <div class="sidebar-footer">
@@ -110,13 +100,11 @@
       </button>
       <div class="header-title">{% block page_title %}Dashboard{% endblock %}</div>
       <div class="header-actions">
+        <div id="adminClock" style="font-size:.82rem;font-weight:600;color:#003087;background:#e8f0fe;padding:.3rem .8rem;border-radius:20px;margin-right:.5rem"></div>
         <button class="header-btn" id="notifBtn" title="Notifications" aria-label="Notifications">
           <i class="fas fa-bell"></i>
           <span class="notif-dot" style="display:none"></span>
         </button>
-        <a href="{% url 'admin_chat' %}" class="header-btn" title="Messages" aria-label="Chat">
-          <i class="fas fa-comment"></i>
-        </a>
         <a href="{% url 'logout' %}" class="header-btn" title="Logout" style="color:#dc3545" aria-label="Logout">
           <i class="fas fa-sign-out-alt"></i>
         </a>
@@ -224,6 +212,9 @@
 </script>
 <script src="{% static 'js/main.js' %}"></script>
 <script src="{% static 'js/pwa.js' %}"></script>
+<script>
+(function(){function t(){var e=document.getElementById('adminClock');if(e){var n=new Date();e.textContent=n.toLocaleTimeString('en-GH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}}t();setInterval(t,1000);})();
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

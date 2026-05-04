@@ -1,56 +1,29 @@
-{% extends 'admin/base_admin.html' %}
-{% load static %}
+{% extends 'superadmin/base_superadmin.html' %}
 {% block title %}Create Admin — WTI{% endblock %}
 {% block page_title %}Create New Admin{% endblock %}
-
+{% block nav_create %}active{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
 <div class="col-lg-6">
-  <div class="wti-card">
-    <div class="wti-card-header" style="background:linear-gradient(135deg,#003087,#0047b3)">
+  <div class="sa-card">
+    <div class="sa-card-header" style="background:linear-gradient(135deg,#003087,#0047b3)">
       <h5 style="color:#fff"><i class="fas fa-user-plus me-2"></i>Create Admin Account</h5>
     </div>
-    <div class="wti-card-body">
-      {% if error %}
-      <div class="alert alert-danger" style="font-size:.83rem;border-radius:10px">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-      </div>
-      {% endif %}
+    <div style="padding:1.5rem">
+      {% if error %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>{% endif %}
       <form method="post" novalidate>
         {% csrf_token %}
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">First Name</label>
-            <input type="text" name="first_name" class="form-control" placeholder="First Name">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Last Name</label>
-            <input type="text" name="last_name" class="form-control" placeholder="Last Name">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" placeholder="Email Address">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Username *</label>
-            <input type="text" name="username" class="form-control" placeholder="Choose a username" required>
-          </div>
-          <div class="col-12">
-            <label class="form-label">Password *</label>
-            <input type="password" name="password" class="form-control" placeholder="Set a password" required>
-          </div>
-          <div class="col-12">
-            <div class="alert alert-info" style="font-size:.8rem;border-radius:10px;margin:0">
-              <i class="fas fa-info-circle me-1"></i>
-              This admin will have access to manage teachers, attendance, timetables and notifications.
-            </div>
-          </div>
+          <div class="col-md-6"><label class="form-label">First Name</label><input type="text" name="first_name" class="form-control" placeholder="First Name"></div>
+          <div class="col-md-6"><label class="form-label">Last Name</label><input type="text" name="last_name" class="form-control" placeholder="Last Name"></div>
+          <div class="col-12"><label class="form-label">Email</label><input type="email" name="email" class="form-control" placeholder="Email Address"></div>
+          <div class="col-12"><label class="form-label">Username *</label><input type="text" name="username" class="form-control" placeholder="Choose a username" required></div>
+          <div class="col-12"><label class="form-label">Password *</label><input type="password" name="password" class="form-control" placeholder="Set a password" required></div>
+          <div class="col-12"><div class="alert alert-info" style="font-size:.8rem;border-radius:10px;margin:0"><i class="fas fa-info-circle me-1"></i>This admin can approve teachers and view teacher lists by department.</div></div>
         </div>
-        <div class="d-flex gap-2 mt-4">
-          <a href="{% url 'superadmin_dashboard' %}" class="btn btn-outline-secondary rounded-3 px-4">Cancel</a>
-          <button type="submit" class="btn-gold rounded-3 px-4 py-2">
-            <i class="fas fa-user-plus me-2"></i>Create Admin
-          </button>
+        <div style="display:flex;gap:.8rem;margin-top:1.2rem">
+          <a href="{% url 'superadmin_admins' %}" class="btn btn-outline-secondary rounded-3 px-4">Cancel</a>
+          <button type="submit" style="background:linear-gradient(135deg,#003087,#0047b3);color:#fff;border:none;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;font-size:.88rem;cursor:pointer"><i class="fas fa-user-plus me-2"></i>Create Admin</button>
         </div>
       </form>
     </div>

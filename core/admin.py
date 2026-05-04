@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     TeacherProfile, Attendance, QRCode, Notification,
-    ChatMessage, TimetableEntry, ClassSchedule
+    TimetableEntry, ClassSchedule, AdminProfile
 )
 
 
@@ -19,15 +19,15 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ['teacher', 'date', 'status', 'check_in_time', 'lesson_done_time']
-    list_filter = ['status', 'date']
+    list_display = ['teacher', 'date', 'school_status', 'lesson_status', 'check_in_time', 'lesson_done_time']
+    list_filter = ['school_status', 'lesson_status', 'date']
     search_fields = ['teacher__user__first_name', 'teacher__user__last_name']
 
 
 @admin.register(QRCode)
 class QRCodeAdmin(admin.ModelAdmin):
-    list_display = ['label', 'date', 'is_active', 'created_by', 'created_at']
-    list_filter = ['is_active', 'date']
+    list_display = ['label', 'qr_type', 'valid_from', 'valid_until', 'is_active', 'created_by', 'created_at']
+    list_filter = ['is_active', 'qr_type']
 
 
 @admin.register(Notification)
@@ -48,7 +48,7 @@ class ClassScheduleAdmin(admin.ModelAdmin):
     list_filter = ['is_completed', 'scheduled_date']
 
 
-@admin.register(ChatMessage)
-class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ['sender', 'recipient', 'timestamp', 'is_read']
-    list_filter = ['is_read']
+@admin.register(AdminProfile)
+class AdminProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'role', 'created_at']
+    list_filter = ['role']
