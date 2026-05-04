@@ -72,6 +72,9 @@
             <i class="fas fa-certificate me-2"></i> View Certificate
           </a>
           {% endif %}
+          <a href="{% url 'delete_teacher' teacher.id %}" class="btn btn-danger rounded-3" style="font-size:0.85rem;font-weight:600">
+            <i class="fas fa-trash me-2"></i> Delete Teacher
+          </a>
         </div>
       </div>
     </div>

@@ -373,7 +373,6 @@ def approve_teacher(request, teacher_id):
     teacher = get_object_or_404(TeacherProfile, id=teacher_id)
     teacher.is_approved = True
     teacher.save()
-    # Notify teacher
     Notification.objects.create(
         recipient=teacher.user,
         sender=request.user,
@@ -393,6 +392,20 @@ def reject_teacher(request, teacher_id):
     teacher.user.delete()
     messages.warning(request, f'{name} has been rejected and removed.')
     return redirect('admin_teachers')
+
+
+@login_required
+@user_passes_test(is_admin)
+def delete_teacher(request, teacher_id):
+    """Fully delete an approved or pending teacher with confirmation."""
+    teacher = get_object_or_404(TeacherProfile, id=teacher_id)
+    if request.method == 'POST':
+        name = teacher.full_name
+        teacher.user.delete()  # cascades to profile, attendance, etc.
+        messages.success(request, f'{name} has been permanently deleted.')
+        return redirect('admin_teachers')
+    # GET — show confirmation page
+    return render(request, 'admin/confirm_delete.html', {'teacher': teacher})
 
 
 # ─── QR Code Management ───────────────────────────────────────────────────────
