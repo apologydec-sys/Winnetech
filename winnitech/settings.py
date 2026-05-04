@@ -116,3 +116,11 @@ LOGOUT_REDIRECT_URL = '/'
 
 SCHOOL_START_TIME = '07:00'
 SCHOOL_END_TIME = '15:30'
+
+# CSRF trusted origins for Render deployment
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'https://winnetech.onrender.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
