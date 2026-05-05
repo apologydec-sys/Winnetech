@@ -94,18 +94,13 @@ body{font-family:'Poppins',sans-serif;background:var(--school-blue-dark);overflo
 <canvas id="particles"></canvas>
 
 <div class="welcome-wrapper">
-  <img src="{% static 'images/ChatGPT Image Apr 28, 2026, 10_01_09 AM.png' %}" alt="WTI Crest" class="school-crest">
+  <img src="{% static 'images/wti_logo.png' %}" alt="WTI Logo" class="school-crest">
 
   <h1 class="school-name">
     Winneba <span class="highlight">Technical</span><br>Institute
   </h1>
 
   <div class="system-name">Teachers Management Record System</div>
-
-  <p class="school-tagline">
-    Transforming and Empowering Youth Through Training Skills
-    <span class="sub">This system is designed for Teacher Records — Attendance, Schedules &amp; Communication</span>
-  </p>
 
   <div class="divider"></div>
 
@@ -123,6 +118,10 @@ body{font-family:'Poppins',sans-serif;background:var(--school-blue-dark);overflo
       <span class="portal-btn">Get Started</span>
     </a>
   </div>
+
+  <p class="teacher-login-link">
+    Already registered? <a href="{% url 'teacher_login' %}">Teacher Login <i class="fas fa-arrow-right"></i></a>
+  </p>
 </div>
 
 <div class="welcome-footer">

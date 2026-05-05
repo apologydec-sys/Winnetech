@@ -369,14 +369,77 @@ def admin_dashboard(request):
 
 @login_required
 @user_passes_test(is_admin)
-def admin_teachers(request):
-    teachers = TeacherProfile.objects.select_related('user').all().order_by('-date_joined')
-    return render(request, 'admin/teachers.html', {'teachers': teachers})
+def teacher_detail(request, teacher_id):
+    """Admin can only VIEW QR codes, not generate them."""
+    school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
+    lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
+    return render(request, 'admin/qr_view.html', {
+        'school_qrs': school_qrs,
+        'lesson_qrs': lesson_qrs,
+    })
 
 
 @login_required
 @user_passes_test(is_admin)
-def teacher_detail(request, teacher_id):
+def admin_department_view(request, dept_slug):
+    """Show all teachers in a specific department with their attendance."""
+    from .models import DEPARTMENT_CHOICES
+    dept_map = dict(DEPARTMENT_CHOICES)
+    dept_name = dept_map.get(dept_slug, dept_slug.replace('_', ' ').title())
+
+    if dept_slug == 'core':
+        teachers = TeacherProfile.objects.filter(
+            is_approved=True, course_type='core'
+        ).select_related('user')
+        dept_name = 'Core Subjects'
+    else:
+        teachers = TeacherProfile.objects.filter(
+            is_approved=True, department=dept_slug
+        ).select_related('user')
+
+    today = timezone.localdate()
+    # Get today's attendance for these teachers
+    teacher_ids = teachers.values_list('id', flat=True)
+    today_att = Attendance.objects.filter(
+        date=today, teacher_id__in=teacher_ids
+    ).select_related('teacher__user')
+    att_map = {a.teacher_id: a for a in today_att}
+
+    teacher_data = []
+    for t in teachers:
+        att = att_map.get(t.id)
+        teacher_data.append({
+            'teacher': t,
+            'attendance': att,
+            'school_status': att.school_status if att else 'absent',
+            'lesson_status': att.lesson_status if att else 'pending',
+            'check_in': att.check_in_time if att else None,
+            'lesson_done': att.lesson_done_time if att else None,
+        })
+
+    return render(request, 'admin/department_view.html', {
+        'dept_name': dept_name,
+        'dept_slug': dept_slug,
+        'teacher_data': teacher_data,
+        'today': today,
+        'total': teachers.count(),
+        'present': sum(1 for d in teacher_data if d['school_status'] == 'present'),
+        'lesson_done': sum(1 for d in teacher_data if d['lesson_status'] == 'done'),
+    })
+
+
+@login_required
+@user_passes_test(is_superadmin)
+def qr_detail_sa(request, qr_id):
+    """Super admin QR detail view."""
+    return qr_detail(request, qr_id)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_teachers(request):
+    teachers = TeacherProfile.objects.select_related('user').all().order_by('-date_joined')
+    return render(request, 'admin/teachers.html', {'teachers': teachers})
     teacher = get_object_or_404(TeacherProfile, id=teacher_id)
     attendances = Attendance.objects.filter(teacher=teacher).order_by('-date')[:30]
     return render(request, 'admin/teacher_detail.html', {'teacher': teacher, 'attendances': attendances})
@@ -511,6 +574,18 @@ def admin_notifications(request):
 
 @login_required
 @user_passes_test(is_admin)
+def admin_qr_view(request):
+    """Admin can only VIEW QR codes — generation is superadmin only."""
+    school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
+    lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
+    return render(request, 'admin/qr_view.html', {
+        'school_qrs': school_qrs,
+        'lesson_qrs': lesson_qrs,
+    })
+
+
+@login_required
+@user_passes_test(is_superadmin)
 def generate_qr(request):
     if request.method == 'POST':
         form = QRCodeForm(request.POST)
