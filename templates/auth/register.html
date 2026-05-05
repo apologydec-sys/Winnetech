@@ -172,10 +172,10 @@ body{font-family:'Poppins',sans-serif;}
       <label class="form-label fw-bold mb-2">Select Course Type *</label>
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <div class="tc" id="tc_el" onclick="pickType('electives')">
+          <div class="tc" id="tc_el" onclick="pickType('core')">
             <i class="fas fa-book" style="color:#00d4ff"></i>
-            <div class="fw-bold" style="font-size:.88rem">Electives</div>
-            <small class="text-muted">Core academic subjects</small>
+            <div class="fw-bold" style="font-size:.88rem">Core Subjects</div>
+            <small class="text-muted">Maths, English, Science...</small>
           </div>
         </div>
         <div class="col-6">
@@ -292,9 +292,58 @@ body{font-family:'Poppins',sans-serif;}
 var cur=1,tot=4;
 var labels=['Step 1 of 4 — Personal Information','Step 2 of 4 — Professional Information','Step 3 of 4 — Course Preference','Step 4 of 4 — Documents & Account'];
 
+// Validate required fields in current step before advancing
+function validateStep(step){
+  var errs=[];
+  if(step===1){
+    var req=['first_name','last_name','username','email','phone','address'];
+    req.forEach(function(n){
+      var el=document.querySelector('[name="'+n+'"]');
+      if(el&&!el.value.trim()){errs.push(el.closest('.col-12,.col-md-6').querySelector('.form-label').textContent.replace('*','').trim());}
+      if(el&&!el.value.trim()){el.style.borderColor='#dc3545';}else if(el){el.style.borderColor='';}
+    });
+    var gender=document.querySelector('[name="gender"]');
+    if(gender&&!gender.value){errs.push('Gender');gender.style.borderColor='#dc3545';}else if(gender){gender.style.borderColor='';}
+  }
+  if(step===2){
+    var req2=['qualification','specialization','years_of_experience'];
+    req2.forEach(function(n){
+      var el=document.querySelector('[name="'+n+'"]');
+      if(el&&!el.value.trim()){errs.push(n.replace(/_/g,' '));el.style.borderColor='#dc3545';}else if(el){el.style.borderColor='';}
+    });
+  }
+  if(step===3){return chk3();}
+  if(step===4){
+    var p1=document.getElementById('p1'),p2=document.getElementById('p2');
+    if(!p1.value){errs.push('Password');p1.style.borderColor='#dc3545';}else{p1.style.borderColor='';}
+    if(!p2.value){errs.push('Confirm Password');p2.style.borderColor='#dc3545';}else{p2.style.borderColor='';}
+    if(p1.value&&p2.value&&p1.value!==p2.value){errs.push('Passwords do not match');p1.style.borderColor='#dc3545';p2.style.borderColor='#dc3545';}
+  }
+  if(errs.length>0){
+    showStepError('Please fill in: '+errs.join(', '));
+    return false;
+  }
+  clearStepError();
+  return true;
+}
+
+function showStepError(msg){
+  var e=document.getElementById('stepErr');
+  if(!e){e=document.createElement('div');e.id='stepErr';e.style.cssText='background:#fff3f3;border:1px solid #f5c6cb;border-radius:10px;padding:.7rem 1rem;font-size:.82rem;color:#721c24;margin-bottom:.8rem;';document.getElementById('rf').insertBefore(e,document.getElementById('rf').firstChild);}
+  e.innerHTML='<i class="fas fa-exclamation-circle me-2"></i>'+msg;
+  e.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearStepError(){
+  var e=document.getElementById('stepErr');
+  if(e)e.style.display='none';
+}
+
 function go(d){
-  if(d===1&&cur===3&&!chk3())return;
+  if(d===1&&!validateStep(cur))return;
   var n=cur+d;if(n<1||n>tot)return;
+  clearStepError();
   document.getElementById('st'+cur).classList.remove('active');
   document.getElementById('s'+cur).classList.remove('on');
   document.getElementById('s'+cur).classList.add('dn');
@@ -319,9 +368,9 @@ function pickType(t){
   document.getElementById('hct').value=t;
   document.getElementById('hs').value='';
   document.getElementById('hd').value='';
-  document.getElementById('tc_el').classList.toggle('pk',t==='electives');
+  document.getElementById('tc_el').classList.toggle('pk',t==='core');
   document.getElementById('tc_dp').classList.toggle('pk',t==='departmental');
-  document.getElementById('elSec').style.display=t==='electives'?'block':'none';
+  document.getElementById('elSec').style.display=t==='core'?'block':'none';
   document.getElementById('dpSec').style.display=t==='departmental'?'block':'none';
   document.getElementById('subjGrid').style.display='none';
   document.getElementById('pickMsg').style.display='none';

@@ -162,19 +162,19 @@
     <span>Teachers</span>
     {% if pending_count %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
   </a>
-  <a href="{% url 'generate_qr' %}" class="{% block mob_qr %}{% endblock %}" aria-label="QR Code" style="position:relative">
+  <a href="{% url 'admin_qr_view' %}" class="{% block mob_qr %}{% endblock %}" aria-label="QR Code" style="position:relative">
     <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 4px 15px rgba(245,166,35,0.5)">
       <i class="fas fa-qrcode" style="font-size:1.3rem;color:#fff"></i>
     </div>
-    <span>QR Code</span>
+    <span>QR Codes</span>
   </a>
   <a href="{% url 'admin_attendance' %}" class="{% block mob_attendance %}{% endblock %}" aria-label="Attendance">
     <i class="fas fa-clipboard-check"></i>
     <span>Attendance</span>
   </a>
-  <a href="{% url 'admin_chat' %}" class="{% block mob_chat %}{% endblock %}" aria-label="Chat">
-    <i class="fas fa-comments"></i>
-    <span>Chat</span>
+  <a href="{% url 'logout' %}" aria-label="Logout" style="color:#dc3545">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
   </a>
 </nav>
 

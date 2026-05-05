@@ -173,14 +173,19 @@ class QRCode(models.Model):
     label = models.CharField(max_length=100, default='School Attendance QR')
 
     def save(self, *args, **kwargs):
-        if not self.valid_until:
-            from datetime import timedelta
-            self.valid_until = self.valid_from.replace(year=self.valid_from.year + 5)
+        if not self.valid_until and self.valid_from:
+            try:
+                self.valid_until = self.valid_from.replace(year=self.valid_from.year + 5)
+            except ValueError:
+                # Feb 29 edge case
+                self.valid_until = self.valid_from.replace(year=self.valid_from.year + 5, day=28)
         super().save(*args, **kwargs)
 
     @property
     def is_valid_today(self):
         today = date.today()
+        if not self.valid_until:
+            return self.is_active
         return self.is_active and self.valid_from <= today <= self.valid_until
 
     def __str__(self):

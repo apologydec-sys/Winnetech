@@ -129,7 +129,7 @@ class TeacherRegistrationForm(UserCreationForm):
     def clean_course_type(self):
         ct = self.cleaned_data.get('course_type', '')
         if not ct:
-            raise ValidationError('Please select a course type (Electives or Departmental).')
+            raise ValidationError('Please select a course type (Core Subjects or Departmental).')
         return ct
 
     def clean_preferred_subject(self):
