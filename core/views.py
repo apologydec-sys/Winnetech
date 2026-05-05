@@ -17,7 +17,7 @@ from .models import (
     TimetableEntry, ClassSchedule, AdminProfile
 )
 from .forms import (
-    TeacherRegistrationForm, TeacherLoginForm,
+    TeacherRegistrationForm,
     NotificationForm, TimetableEntryForm, ClassScheduleForm, QRCodeForm
 )
 
@@ -94,27 +94,28 @@ def teacher_register(request):
 
 
 def teacher_login(request):
+    """Login using Staff ID (e.g. WTI0001) and password."""
     if request.user.is_authenticated and not request.user.is_staff:
         return redirect('teacher_dashboard')
     error = None
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        staff_id = request.POST.get('staff_id', '').strip().upper()
         password = request.POST.get('password', '').strip()
-        user = authenticate(request, username=username, password=password)
-        if user is None:
-            error = 'Invalid username or password.'
-        elif user.is_staff:
-            error = 'Please use the Admin Portal to login as admin.'
+        if not staff_id or not password:
+            error = 'Please enter your Staff ID and password.'
         else:
             try:
-                profile = user.teacher_profile
-                if not profile.is_approved:
+                profile = TeacherProfile.objects.select_related('user').get(staff_id=staff_id)
+                user = authenticate(request, username=profile.user.username, password=password)
+                if user is None:
+                    error = 'Invalid Staff ID or password.'
+                elif not profile.is_approved:
                     error = 'Your account is pending admin approval.'
                 else:
                     login(request, user)
                     return redirect('teacher_dashboard')
             except TeacherProfile.DoesNotExist:
-                error = 'Teacher profile not found.'
+                error = 'Invalid Staff ID or password.'
     return render(request, 'auth/teacher_login.html', {'error': error})
 
 
@@ -369,14 +370,18 @@ def admin_dashboard(request):
 
 @login_required
 @user_passes_test(is_admin)
-def teacher_detail(request, teacher_id):
-    """Admin can only VIEW QR codes, not generate them."""
+def admin_qr_view(request):
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
     lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
-    return render(request, 'admin/qr_view.html', {
-        'school_qrs': school_qrs,
-        'lesson_qrs': lesson_qrs,
-    })
+    return render(request, 'admin/qr_view.html', {'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
+
+
+@login_required
+@user_passes_test(is_admin)
+def teacher_detail(request, teacher_id):
+    teacher = get_object_or_404(TeacherProfile, id=teacher_id)
+    attendances = Attendance.objects.filter(teacher=teacher).order_by('-date')[:30]
+    return render(request, 'admin/teacher_detail.html', {'teacher': teacher, 'attendances': attendances})
 
 
 @login_required
@@ -440,9 +445,6 @@ def qr_detail_sa(request, qr_id):
 def admin_teachers(request):
     teachers = TeacherProfile.objects.select_related('user').all().order_by('-date_joined')
     return render(request, 'admin/teachers.html', {'teachers': teachers})
-    teacher = get_object_or_404(TeacherProfile, id=teacher_id)
-    attendances = Attendance.objects.filter(teacher=teacher).order_by('-date')[:30]
-    return render(request, 'admin/teacher_detail.html', {'teacher': teacher, 'attendances': attendances})
 
 
 @login_required
@@ -606,19 +608,20 @@ def generate_qr(request):
         form = QRCodeForm()
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
     lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
-    return render(request, 'admin/qr_generate.html', {'form': form, 'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
+    return render(request, 'superadmin/qr_generate.html', {'form': form, 'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
 
 
 @login_required
-@user_passes_test(is_admin)
 def qr_detail(request, qr_id):
+    if not (request.user.is_staff):
+        return redirect('welcome')
     qr_obj = get_object_or_404(QRCode, id=qr_id)
     scan_path = f'/scan/school/{qr_obj.code}/' if qr_obj.qr_type == 'school_attendance' else f'/scan/lesson/{qr_obj.code}/'
     scan_url = request.build_absolute_uri(scan_path)
     img = qrcode.make(scan_url)
-    buf = __import__('io').BytesIO()
+    buf = io.BytesIO()
     img.save(buf, format='PNG')
-    qr_b64 = __import__('base64').b64encode(buf.getvalue()).decode()
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
     return render(request, 'admin/qr_detail.html', {'qr_obj': qr_obj, 'scan_url': scan_url, 'qr_b64': qr_b64})
 
 

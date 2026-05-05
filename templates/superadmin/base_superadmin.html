@@ -53,8 +53,13 @@
       <a href="{% url 'superadmin_admins' %}" class="sa-link {% block nav_admins %}{% endblock %}"><i class="fas fa-user-shield"></i> Manage Admins</a>
       <a href="{% url 'superadmin_create_admin' %}" class="sa-link {% block nav_create %}{% endblock %}"><i class="fas fa-user-plus"></i> Create Admin</a>
       <a href="{% url 'superadmin_teachers' %}" class="sa-link {% block nav_teachers %}{% endblock %}"><i class="fas fa-chalkboard-teacher"></i> All Teachers</a>
+      <div class="sa-sec">School</div>
+      <a href="{% url 'admin_timetable' %}" class="sa-link {% block nav_timetable %}{% endblock %}"><i class="fas fa-calendar-alt"></i> Timetable</a>
+      <a href="{% url 'admin_schedule' %}" class="sa-link {% block nav_schedule %}{% endblock %}"><i class="fas fa-calendar-plus"></i> Schedule Classes</a>
+      <a href="{% url 'admin_notifications' %}" class="sa-link {% block nav_notif %}{% endblock %}"><i class="fas fa-bell"></i> Notifications</a>
       <div class="sa-sec">QR Codes</div>
       <a href="{% url 'generate_qr' %}" class="sa-link {% block nav_qr %}{% endblock %}"><i class="fas fa-qrcode"></i> Generate QR</a>
+      <a href="{% url 'qr_scanner' %}" class="sa-link"><i class="fas fa-camera"></i> QR Scanner</a>
     </nav>
     <div class="sa-footer">
       <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;">

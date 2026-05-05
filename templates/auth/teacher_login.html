@@ -7,37 +7,36 @@
 <div class="auth-page">
   <div class="auth-card">
     <div class="auth-logo">
-      <img src="{% static 'images/ChatGPT Image Apr 28, 2026, 10_01_09 AM.png' %}" alt="WTI Logo">
+      <img src="{% static 'images/wti_logo.png' %}" alt="WTI Logo">
       <h4>Teacher Login</h4>
-      <p>Winneba Technical Institute Staff System</p>
+      <p>Enter your Staff ID to access your portal</p>
     </div>
 
-    {% if messages %}
-      {% for msg in messages %}
-        <div class="alert alert-{{ msg.tags }} auto-dismiss alert-dismissible fade show" role="alert">
-          {{ msg }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
+    {% if error %}
+    <div class="alert alert-danger auto-dismiss alert-dismissible fade show" style="font-size:.83rem;border-radius:10px">
+      <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     {% endif %}
 
     <form method="post" novalidate>
       {% csrf_token %}
       <div class="mb-3">
-        <label class="form-label"><i class="fas fa-user me-1" style="color:var(--gold)"></i> Username</label>
-        <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+        <label class="form-label"><i class="fas fa-id-badge me-1" style="color:#003087"></i> Staff ID</label>
+        <input type="text" name="staff_id" class="form-control" placeholder="e.g. WTI0001" required autofocus autocomplete="off" style="text-transform:uppercase;letter-spacing:1px;font-weight:600">
+        <small class="text-muted">Enter your Staff ID (e.g. WTI0001)</small>
       </div>
       <div class="mb-4">
-        <label class="form-label"><i class="fas fa-lock me-1" style="color:var(--gold)"></i> Password</label>
+        <label class="form-label"><i class="fas fa-lock me-1" style="color:#003087"></i> Password</label>
         <div class="position-relative">
-          <input type="password" name="password" id="teacherPass" class="form-control" placeholder="Enter your password" required>
-          <button type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent text-muted" onclick="togglePass('teacherPass')">
+          <input type="password" name="password" id="teacherPass" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent text-muted" onclick="var e=document.getElementById('teacherPass');e.type=e.type=='password'?'text':'password'">
             <i class="fas fa-eye"></i>
           </button>
         </div>
       </div>
       <button type="submit" class="btn-gold w-100 py-3 rounded-3">
-        <i class="fas fa-sign-in-alt me-2"></i> Login
+        <i class="fas fa-sign-in-alt me-2"></i> Login with Staff ID
       </button>
     </form>
 
