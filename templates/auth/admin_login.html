@@ -28,22 +28,23 @@
       {% csrf_token %}
       <div class="mb-3">
         <label class="form-label">
-          <i class="fas fa-user-shield me-1" style="color:var(--gold)"></i> Admin Username
+          <i class="fas fa-id-badge me-1" style="color:#003087"></i> Admin Staff ID
         </label>
-        <input type="text" name="username" class="form-control" placeholder="Enter admin username"
-               required autofocus autocomplete="username" value="{{ request.POST.username|default:'' }}">
+        <input type="text" name="staff_id" class="form-control" placeholder="e.g. WTIAdmin"
+               required autofocus autocomplete="username" style="font-weight:600">
+        <small class="text-muted" style="font-size:.75rem">Enter your Admin Staff ID</small>
       </div>
       <div class="mb-4">
         <label class="form-label">
-          <i class="fas fa-lock me-1" style="color:var(--gold)"></i> Password
+          <i class="fas fa-lock me-1" style="color:#003087"></i> Password
         </label>
         <div class="position-relative">
           <input type="password" name="password" id="adminPass" class="form-control"
                  placeholder="Enter password" required autocomplete="current-password">
           <button type="button"
                   class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent text-muted"
-                  onclick="tp()">
-            <i class="fas fa-eye" id="eyeIcon"></i>
+                  onclick="var e=document.getElementById('adminPass');e.type=e.type=='password'?'text':'password'">
+            <i class="fas fa-eye"></i>
           </button>
         </div>
       </div>

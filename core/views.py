@@ -120,6 +120,7 @@ def teacher_login(request):
 
 
 def admin_login(request):
+    """Admin logs in with their Staff ID (username) and password."""
     if request.user.is_authenticated and request.user.is_staff:
         try:
             if request.user.admin_profile.role == 'superadmin':
@@ -129,25 +130,28 @@ def admin_login(request):
         return redirect('admin_dashboard')
     error = None
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        staff_id = request.POST.get('staff_id', '').strip()
         password = request.POST.get('password', '').strip()
-        user = authenticate(request, username=username, password=password)
-        if user is None:
-            error = 'Invalid username or password.'
-        elif not user.is_staff:
-            error = 'This account does not have admin privileges.'
-        elif not user.is_active:
-            error = 'This account is disabled.'
+        if not staff_id or not password:
+            error = 'Please enter your Staff ID and password.'
         else:
-            try:
-                if user.admin_profile.role == 'superadmin':
-                    error = 'Please use the Super Admin Portal.'
-                else:
+            user = authenticate(request, username=staff_id, password=password)
+            if user is None:
+                error = 'Invalid Staff ID or password.'
+            elif not user.is_staff:
+                error = 'This account does not have admin privileges.'
+            elif not user.is_active:
+                error = 'This account is disabled.'
+            else:
+                try:
+                    if user.admin_profile.role == 'superadmin':
+                        error = 'Please use the Super Admin Portal.'
+                    else:
+                        login(request, user)
+                        return redirect('admin_dashboard')
+                except Exception:
                     login(request, user)
                     return redirect('admin_dashboard')
-            except Exception:
-                login(request, user)
-                return redirect('admin_dashboard')
     return render(request, 'auth/admin_login.html', {'error': error})
 
 
@@ -577,13 +581,9 @@ def admin_notifications(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_qr_view(request):
-    """Admin can only VIEW QR codes — generation is superadmin only."""
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
     lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
-    return render(request, 'admin/qr_view.html', {
-        'school_qrs': school_qrs,
-        'lesson_qrs': lesson_qrs,
-    })
+    return render(request, 'admin/qr_view.html', {'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
 
 
 @login_required
