@@ -766,6 +766,60 @@ def superadmin_delete_teacher(request, teacher_id):
     if request.method == 'POST':
         name = teacher.full_name
         teacher.user.delete()
+        messages.success(request, f'{name} permanently deleted.')
+        return redirect('superadmin_teachers')
+    return render(request, 'superadmin/confirm_delete_teacher.html', {'teacher': teacher})
+
+
+@login_required
+@user_passes_test(is_superadmin)
+def superadmin_change_credentials(request):
+    """Super admin can change their own username and password."""
+    error = None
+    success = None
+    if request.method == 'POST':
+        new_username = request.POST.get('new_username', '').strip()
+        current_password = request.POST.get('current_password', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not current_password:
+            error = 'Please enter your current password to confirm changes.'
+        elif not authenticate(request, username=request.user.username, password=current_password):
+            error = 'Current password is incorrect.'
+        elif new_username and User.objects.filter(username=new_username).exclude(pk=request.user.pk).exists():
+            error = f'Username "{new_username}" is already taken.'
+        elif new_password and new_password != confirm_password:
+            error = 'New passwords do not match.'
+        elif new_password and len(new_password) < 6:
+            error = 'New password must be at least 6 characters.'
+        else:
+            user = request.user
+            changed = []
+            if new_username and new_username != user.username:
+                user.username = new_username
+                changed.append('username')
+            if new_password:
+                user.set_password(new_password)
+                changed.append('password')
+            if changed:
+                user.save()
+                # Re-login to keep session valid after password change
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, user)
+                success = f'Successfully updated: {", ".join(changed)}.'
+            else:
+                success = 'No changes made.'
+
+    return render(request, 'superadmin/change_credentials.html', {
+        'error': error,
+        'success': success,
+        'current_username': request.user.username,
+    })
+    teacher = get_object_or_404(TeacherProfile, id=teacher_id)
+    if request.method == 'POST':
+        name = teacher.full_name
+        teacher.user.delete()
         messages.success(request, f'{name} deleted.')
         return redirect('superadmin_teachers')
     return render(request, 'superadmin/confirm_delete_teacher.html', {'teacher': teacher})
