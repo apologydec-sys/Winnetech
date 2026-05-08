@@ -399,7 +399,7 @@ def admin_department_view(request, dept_slug):
     if dept_slug == 'core':
         teachers = TeacherProfile.objects.filter(
             is_approved=True, course_type='core'
-        ).select_related('user')
+        ).select_related('user').order_by('preferred_subject')
         dept_name = 'Core Subjects'
     else:
         teachers = TeacherProfile.objects.filter(
@@ -434,6 +434,7 @@ def admin_department_view(request, dept_slug):
         'total': teachers.count(),
         'present': sum(1 for d in teacher_data if d['school_status'] == 'present'),
         'lesson_done': sum(1 for d in teacher_data if d['lesson_status'] == 'done'),
+        'is_core': dept_slug == 'core',
     })
 
 
@@ -816,10 +817,11 @@ def superadmin_change_credentials(request):
         'success': success,
         'current_username': request.user.username,
     })
-    teacher = get_object_or_404(TeacherProfile, id=teacher_id)
-    if request.method == 'POST':
-        name = teacher.full_name
-        teacher.user.delete()
-        messages.success(request, f'{name} deleted.')
-        return redirect('superadmin_teachers')
-    return render(request, 'superadmin/confirm_delete_teacher.html', {'teacher': teacher})
+
+
+@login_required
+@user_passes_test(is_superadmin)
+def superadmin_staff_ids(request):
+    """Registry of all teacher Staff IDs."""
+    teachers = TeacherProfile.objects.select_related('user').all().order_by('staff_id')
+    return render(request, 'superadmin/staff_ids.html', {'teachers': teachers})

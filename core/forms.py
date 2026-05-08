@@ -17,6 +17,17 @@ ALL_SUBJECT_VALUES = (
 
 
 class TeacherRegistrationForm(UserCreationForm):
+    # ── Staff ID (chosen by teacher, used for login) ───────────────────────
+    staff_id = forms.CharField(
+        max_length=20, required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g. WTI0042',
+            'style': 'text-transform:uppercase;font-weight:600;letter-spacing:1px',
+        }),
+        help_text='This will be your login ID. Must be unique (e.g. WTI0042).'
+    )
+
     # ── Personal ──────────────────────────────────────────────
     first_name = forms.CharField(
         max_length=100, required=True,
@@ -67,13 +78,9 @@ class TeacherRegistrationForm(UserCreationForm):
     course_type = forms.ChoiceField(
         choices=[('', '-- Select Course Type --')] + list(COURSE_TYPE_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select'}))
-
-    # preferred_subject accepts ANY non-empty string — validated in clean()
     preferred_subject = forms.CharField(
         max_length=100, required=True,
         widget=forms.HiddenInput())
-
-    # department is completely optional — stored as plain text
     department = forms.CharField(
         max_length=100, required=False,
         widget=forms.HiddenInput())
@@ -94,10 +101,8 @@ class TeacherRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}),
-        }
+        # No username field — we generate it from staff_id
+        fields = ['first_name', 'last_name', 'email', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,8 +110,20 @@ class TeacherRegistrationForm(UserCreationForm):
             'class': 'form-control', 'placeholder': 'Create a strong password'})
         self.fields['password2'].widget.attrs.update({
             'class': 'form-control', 'placeholder': 'Confirm your password'})
-        # Make username help text cleaner
-        self.fields['username'].help_text = None
+
+    def clean_staff_id(self):
+        sid = self.cleaned_data.get('staff_id', '').strip().upper()
+        if not sid:
+            raise ValidationError('Staff ID is required.')
+        if len(sid) < 4:
+            raise ValidationError('Staff ID must be at least 4 characters.')
+        # Check uniqueness
+        if TeacherProfile.objects.filter(staff_id=sid).exists():
+            raise ValidationError(f'Staff ID "{sid}" is already taken. Choose a different one.')
+        # Also check no user with this username
+        if User.objects.filter(username=sid).exists():
+            raise ValidationError(f'Staff ID "{sid}" is already in use.')
+        return sid
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
@@ -135,10 +152,7 @@ class TeacherRegistrationForm(UserCreationForm):
     def clean_preferred_subject(self):
         subject = self.cleaned_data.get('preferred_subject', '').strip()
         if not subject:
-            raise ValidationError(
-                'Please select a preferred subject. '
-                'Go back to Step 3 and choose your course type and subject.'
-            )
+            raise ValidationError('Please select a preferred subject.')
         return subject
 
     def clean_years_of_experience(self):
@@ -149,6 +163,9 @@ class TeacherRegistrationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        staff_id = self.cleaned_data['staff_id']
+        # Use staff_id as the username so login works
+        user.username = staff_id
         user.first_name = self.cleaned_data['first_name'].strip()
         user.last_name = self.cleaned_data['last_name'].strip()
         user.email = self.cleaned_data['email'].strip().lower()
@@ -156,6 +173,7 @@ class TeacherRegistrationForm(UserCreationForm):
             user.save()
             TeacherProfile.objects.create(
                 user=user,
+                staff_id=staff_id,  # explicitly set — no auto-generation needed
                 phone=self.cleaned_data.get('phone', '').strip(),
                 gender=self.cleaned_data.get('gender', ''),
                 date_of_birth=self.cleaned_data.get('date_of_birth'),

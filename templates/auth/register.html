@@ -86,9 +86,12 @@ body{font-family:'Poppins',sans-serif;}
           <input type="text" name="last_name" class="form-control" placeholder="Last Name" required value="{{ form.last_name.value|default:'' }}">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Username *</label>
-          <input type="text" name="username" class="form-control" placeholder="Choose a username" required value="{{ form.username.value|default:'' }}">
-          <small class="text-muted">Letters, digits and @/./+/-/_ only</small>
+          <label class="form-label">Staff ID * <small style="color:#888;font-weight:400">(your login ID)</small></label>
+          <input type="text" name="staff_id" class="form-control" placeholder="e.g. WTI0042" required
+                 style="text-transform:uppercase;font-weight:600;letter-spacing:1px"
+                 oninput="this.value=this.value.toUpperCase()"
+                 value="{{ form.staff_id.value|default:'' }}">
+          <small class="text-muted" style="font-size:.72rem">Choose a unique Staff ID — you'll use this to login</small>
         </div>
         <div class="col-md-6">
           <label class="form-label">Email *</label>

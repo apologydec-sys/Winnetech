@@ -45,4 +45,5 @@ urlpatterns = [
     path('superadmin/teachers/<int:teacher_id>/approve/', views.superadmin_approve_teacher, name='superadmin_approve_teacher'),
     path('superadmin/teachers/<int:teacher_id>/delete/', views.superadmin_delete_teacher, name='superadmin_delete_teacher'),
     path('superadmin/change-credentials/', views.superadmin_change_credentials, name='superadmin_change_credentials'),
+    path('superadmin/staff-ids/', views.superadmin_staff_ids, name='superadmin_staff_ids'),
 ]
