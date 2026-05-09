@@ -1,4 +1,4 @@
-{% extends 'admin/base_admin.html' %}
+content = """{% extends 'admin/base_admin.html' %}
 {% block title %}Notifications — WTI{% endblock %}
 {% block page_title %}Notifications{% endblock %}
 {% block content %}
@@ -11,3 +11,7 @@
   </div>
 </div>
 {% endblock %}
+"""
+with open('templates/admin/chat.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('chat.html fixed')

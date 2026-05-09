@@ -59,8 +59,8 @@
             <i class="fas fa-check me-2"></i> Approve Teacher
           </a>
           {% endif %}
-          <a href="{% url 'admin_chat_teacher' teacher.id %}" class="btn-outline-gold text-center py-2 rounded-3 text-decoration-none">
-            <i class="fas fa-comment me-2"></i> Send Message
+          <a href="{% url 'admin_notifications' %}" class="btn-outline-gold text-center py-2 rounded-3 text-decoration-none">
+            <i class="fas fa-bell me-2"></i> Send Notification
           </a>
           {% if teacher.cv_document %}
           <a href="{{ teacher.cv_document.url }}" target="_blank" class="btn btn-outline-secondary rounded-3" style="font-size:0.85rem">
