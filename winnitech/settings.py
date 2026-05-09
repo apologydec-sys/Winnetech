@@ -12,7 +12,7 @@ SECRET_KEY = os.environ.get(
     'django-insecure-winnitech-staff-system-2026-secure-key-ghana'
 )
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
