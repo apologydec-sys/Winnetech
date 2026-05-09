@@ -175,6 +175,10 @@ def teacher_dashboard(request):
         messages.error(request, 'Teacher profile not found.')
         return redirect('welcome')
 
+    # Redirect to complete profile if not done yet
+    if not profile.profile_complete:
+        return redirect('teacher_complete_profile')
+
     today = timezone.localdate()
     today_att = Attendance.objects.filter(teacher=profile, date=today).first()
     all_notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')[:20]
@@ -200,6 +204,228 @@ def teacher_dashboard(request):
         'school_qr': school_qr,
         'lesson_qr': lesson_qr,
     })
+
+
+@login_required
+def mark_notification_read(request, notif_id):
+    notif = get_object_or_404(Notification, id=notif_id, recipient=request.user)
+    notif.is_read = True
+    notif.save()
+    return JsonResponse({'status': 'ok'})
+
+
+# ── Teacher Profile Complete / Update / Change Password ───────────────────────
+
+@login_required
+def teacher_complete_profile(request):
+    """First-login profile completion for teachers."""
+    if request.user.is_staff:
+        return redirect('admin_dashboard')
+    try:
+        profile = request.user.teacher_profile
+    except TeacherProfile.DoesNotExist:
+        return redirect('welcome')
+
+    if profile.profile_complete:
+        return redirect('teacher_dashboard')
+
+    from .models import DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS
+    errors = {}
+    if request.method == 'POST':
+        # Collect all fields
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        date_of_birth = request.POST.get('date_of_birth', '').strip() or None
+        address = request.POST.get('address', '').strip()
+        qualification = request.POST.get('qualification', '').strip()
+        specialization = request.POST.get('specialization', '').strip()
+        years_exp = request.POST.get('years_of_experience', '0').strip()
+        course_type = request.POST.get('course_type', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()
+        department = request.POST.get('department', '').strip()
+        previous_school = request.POST.get('previous_school', '').strip()
+        bio = request.POST.get('bio', '').strip()
+        emergency_contact = request.POST.get('emergency_contact', '').strip()
+        emergency_phone = request.POST.get('emergency_phone', '').strip()
+        email = request.POST.get('email', '').strip()
+
+        # Validate required
+        if not first_name: errors['first_name'] = 'First name is required.'
+        if not last_name: errors['last_name'] = 'Last name is required.'
+        if not phone: errors['phone'] = 'Phone number is required.'
+        if not gender: errors['gender'] = 'Please select your gender.'
+        if not address: errors['address'] = 'Address is required.'
+        if not qualification: errors['qualification'] = 'Please select your qualification.'
+        if not specialization: errors['specialization'] = 'Specialization is required.'
+        if not course_type: errors['course_type'] = 'Please select a course type.'
+        if not preferred_subject: errors['preferred_subject'] = 'Please select your subject.'
+
+        if not errors:
+            # Save user name
+            user = request.user
+            user.first_name = first_name
+            user.last_name = last_name
+            if email:
+                user.email = email
+            user.save()
+            # Save profile
+            profile.phone = phone
+            profile.gender = gender
+            profile.date_of_birth = date_of_birth
+            profile.address = address
+            profile.qualification = qualification
+            profile.specialization = specialization
+            profile.years_of_experience = int(years_exp) if years_exp.isdigit() else 0
+            profile.course_type = course_type
+            profile.preferred_subject = preferred_subject
+            profile.department = department
+            profile.previous_school = previous_school
+            profile.bio = bio
+            profile.emergency_contact = emergency_contact
+            profile.emergency_phone = emergency_phone
+            profile.profile_complete = True
+            if request.FILES.get('profile_photo'):
+                profile.profile_photo = request.FILES['profile_photo']
+            if request.FILES.get('cv_document'):
+                profile.cv_document = request.FILES['cv_document']
+            if request.FILES.get('certificate_document'):
+                profile.certificate_document = request.FILES['certificate_document']
+            if request.FILES.get('id_document'):
+                profile.id_document = request.FILES['id_document']
+            profile.save()
+            messages.success(request, f'Welcome {first_name}! Your profile is complete.')
+            return redirect('teacher_dashboard')
+
+    return render(request, 'teacher/complete_profile.html', {
+        'profile': profile,
+        'errors': errors,
+        'post': request.POST,
+        'dept_choices': DEPARTMENT_CHOICES,
+        'course_types': COURSE_TYPE_CHOICES,
+        'genders': GENDER_CHOICES,
+        'qualifications': QUALIFICATION_CHOICES,
+        'elective_subjects': ELECTIVE_SUBJECTS,
+        'dept_subjects': DEPARTMENT_SUBJECTS,
+    })
+
+
+@login_required
+def teacher_update_profile(request):
+    """Teacher updates their profile details."""
+    if request.user.is_staff:
+        return redirect('admin_dashboard')
+    try:
+        profile = request.user.teacher_profile
+    except TeacherProfile.DoesNotExist:
+        return redirect('welcome')
+
+    from .models import DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS
+    errors = {}
+    success = None
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        address = request.POST.get('address', '').strip()
+        qualification = request.POST.get('qualification', '').strip()
+        specialization = request.POST.get('specialization', '').strip()
+        years_exp = request.POST.get('years_of_experience', '0').strip()
+        course_type = request.POST.get('course_type', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()
+        department = request.POST.get('department', '').strip()
+        previous_school = request.POST.get('previous_school', '').strip()
+        bio = request.POST.get('bio', '').strip()
+        emergency_contact = request.POST.get('emergency_contact', '').strip()
+        emergency_phone = request.POST.get('emergency_phone', '').strip()
+        email = request.POST.get('email', '').strip()
+        date_of_birth = request.POST.get('date_of_birth', '').strip() or None
+
+        if not first_name: errors['first_name'] = 'First name is required.'
+        if not last_name: errors['last_name'] = 'Last name is required.'
+        if not phone: errors['phone'] = 'Phone is required.'
+        if not gender: errors['gender'] = 'Gender is required.'
+        if not address: errors['address'] = 'Address is required.'
+        if not qualification: errors['qualification'] = 'Qualification is required.'
+        if not specialization: errors['specialization'] = 'Specialization is required.'
+        if not course_type: errors['course_type'] = 'Course type is required.'
+        if not preferred_subject: errors['preferred_subject'] = 'Subject is required.'
+
+        if not errors:
+            user = request.user
+            user.first_name = first_name
+            user.last_name = last_name
+            if email:
+                user.email = email
+            user.save()
+            profile.phone = phone
+            profile.gender = gender
+            profile.date_of_birth = date_of_birth
+            profile.address = address
+            profile.qualification = qualification
+            profile.specialization = specialization
+            profile.years_of_experience = int(years_exp) if years_exp.isdigit() else 0
+            profile.course_type = course_type
+            profile.preferred_subject = preferred_subject
+            profile.department = department
+            profile.previous_school = previous_school
+            profile.bio = bio
+            profile.emergency_contact = emergency_contact
+            profile.emergency_phone = emergency_phone
+            if request.FILES.get('profile_photo'):
+                profile.profile_photo = request.FILES['profile_photo']
+            if request.FILES.get('cv_document'):
+                profile.cv_document = request.FILES['cv_document']
+            if request.FILES.get('certificate_document'):
+                profile.certificate_document = request.FILES['certificate_document']
+            if request.FILES.get('id_document'):
+                profile.id_document = request.FILES['id_document']
+            profile.save()
+            success = 'Profile updated successfully!'
+
+    return render(request, 'teacher/update_profile.html', {
+        'profile': profile,
+        'errors': errors,
+        'success': success,
+        'dept_choices': DEPARTMENT_CHOICES,
+        'course_types': COURSE_TYPE_CHOICES,
+        'genders': GENDER_CHOICES,
+        'qualifications': QUALIFICATION_CHOICES,
+        'elective_subjects': ELECTIVE_SUBJECTS,
+        'dept_subjects': DEPARTMENT_SUBJECTS,
+    })
+
+
+@login_required
+def teacher_change_password(request):
+    """Teacher changes their own password."""
+    if request.user.is_staff:
+        return redirect('admin_dashboard')
+    error = None
+    success = None
+    if request.method == 'POST':
+        current = request.POST.get('current_password', '').strip()
+        new_pw = request.POST.get('new_password', '').strip()
+        confirm = request.POST.get('confirm_password', '').strip()
+        if not current:
+            error = 'Please enter your current password.'
+        elif not authenticate(request, username=request.user.username, password=current):
+            error = 'Current password is incorrect.'
+        elif not new_pw:
+            error = 'New password is required.'
+        elif len(new_pw) < 4:
+            error = 'New password must be at least 4 characters.'
+        elif new_pw != confirm:
+            error = 'New passwords do not match.'
+        else:
+            request.user.set_password(new_pw)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            success = 'Password changed successfully!'
+    return render(request, 'teacher/change_password.html', {'error': error, 'success': success})
 
 
 @login_required
@@ -565,32 +791,22 @@ def admin_notifications(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_create_teacher(request):
-    """Admin creates teacher accounts with all details."""
-    from .models import DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS
+    """Admin creates teacher with ONLY Staff ID + Password. Teacher fills rest on first login."""
     error = None
     success = None
     if request.method == 'POST':
         staff_id = request.POST.get('staff_id', '').strip().upper()
+        password = request.POST.get('password', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
-        email = request.POST.get('email', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        gender = request.POST.get('gender', '').strip()
-        password = request.POST.get('password', '').strip()
-        address = request.POST.get('address', '').strip()
-        qualification = request.POST.get('qualification', '').strip()
-        specialization = request.POST.get('specialization', '').strip()
-        years_exp = int(request.POST.get('years_of_experience', '0') or 0)
-        course_type = request.POST.get('course_type', '').strip()
-        preferred_subject = request.POST.get('preferred_subject', '').strip()
-        department = request.POST.get('department', '').strip()
-        previous_school = request.POST.get('previous_school', '').strip()
-        bio = request.POST.get('bio', '').strip()
-        emergency_contact = request.POST.get('emergency_contact', '').strip()
-        emergency_phone = request.POST.get('emergency_phone', '').strip()
-
-        if not all([staff_id, first_name, last_name, phone, gender, password, address, qualification, specialization, course_type, preferred_subject]):
-            error = 'Please fill all required fields.'
+        if not staff_id:
+            error = 'Staff ID is required.'
+        elif not password:
+            error = 'Password is required.'
+        elif len(staff_id) < 3:
+            error = 'Staff ID must be at least 3 characters.'
+        elif len(password) < 4:
+            error = 'Password must be at least 4 characters.'
         elif User.objects.filter(username=staff_id).exists():
             error = f'Staff ID "{staff_id}" already exists.'
         elif TeacherProfile.objects.filter(staff_id=staff_id).exists():
@@ -600,43 +816,19 @@ def admin_create_teacher(request):
                 new_user = User.objects.create_user(
                     username=staff_id, password=password,
                     first_name=first_name, last_name=last_name,
-                    email=email, is_active=True
+                    is_active=True
                 )
-                profile_photo = request.FILES.get('profile_photo')
-                cv_doc = request.FILES.get('cv_document')
-                cert_doc = request.FILES.get('certificate_document')
-                id_doc = request.FILES.get('id_document')
                 TeacherProfile.objects.create(
                     user=new_user, staff_id=staff_id,
-                    phone=phone, gender=gender, address=address,
-                    qualification=qualification, specialization=specialization,
-                    years_of_experience=years_exp, course_type=course_type,
-                    preferred_subject=preferred_subject, department=department,
-                    previous_school=previous_school, bio=bio,
-                    emergency_contact=emergency_contact, emergency_phone=emergency_phone,
-                    profile_photo=profile_photo, cv_document=cv_doc,
-                    certificate_document=cert_doc, id_document=id_doc,
-                    is_approved=True,
+                    phone='', gender='male', address='',
+                    qualification='other', specialization='',
+                    course_type='core', preferred_subject='',
+                    is_approved=True, profile_complete=False,
                 )
-                Notification.objects.create(
-                    recipient=new_user, sender=request.user,
-                    title='Account Created',
-                    message=f'Your teacher account has been created. Staff ID: {staff_id}. Use it to login.',
-                    notification_type='admin'
-                )
-                success = f'Teacher "{first_name} {last_name}" created with Staff ID: {staff_id}'
+                success = f'✅ Account created! Staff ID: {staff_id} | Password: {password} — Teacher must complete profile on first login.'
             except Exception as e:
-                error = f'Error creating teacher: {str(e)}'
-
-    return render(request, 'admin/create_teacher.html', {
-        'error': error, 'success': success,
-        'dept_choices': DEPARTMENT_CHOICES,
-        'course_types': COURSE_TYPE_CHOICES,
-        'genders': GENDER_CHOICES,
-        'qualifications': QUALIFICATION_CHOICES,
-        'elective_subjects': ELECTIVE_SUBJECTS,
-        'dept_subjects': DEPARTMENT_SUBJECTS,
-    })
+                error = f'Error: {str(e)}'
+    return render(request, 'admin/create_teacher.html', {'error': error, 'success': success})
 
 
 @login_required

@@ -137,6 +137,7 @@ class TeacherProfile(models.Model):
     certificate_document = models.FileField(upload_to='documents/certificates/', null=True, blank=True)
     id_document = models.FileField(upload_to='documents/ids/', null=True, blank=True)
     is_approved = models.BooleanField(default=False)
+    profile_complete = models.BooleanField(default=False)  # True after teacher fills details
     date_joined = models.DateTimeField(default=timezone.now)
     emergency_contact = models.CharField(max_length=100, blank=True)
     emergency_phone = models.CharField(max_length=20, blank=True)

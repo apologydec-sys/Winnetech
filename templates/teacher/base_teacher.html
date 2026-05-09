@@ -51,6 +51,13 @@
       <a href="{% url 'qr_scanner' %}" class="sidebar-link {% block nav_scanner %}{% endblock %}">
         <i class="fas fa-camera"></i> QR Scanner
       </a>
+      <div class="nav-section-title">My Account</div>
+      <a href="{% url 'teacher_update_profile' %}" class="sidebar-link {% block nav_profile %}{% endblock %}">
+        <i class="fas fa-user-edit"></i> Update Profile
+      </a>
+      <a href="{% url 'teacher_change_password' %}" class="sidebar-link {% block nav_password %}{% endblock %}">
+        <i class="fas fa-key"></i> Change Password
+      </a>
     </nav>
 
     <div class="sidebar-footer">
