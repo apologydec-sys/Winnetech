@@ -759,19 +759,25 @@ def superadmin_admins(request):
 def superadmin_create_admin(request):
     error = None
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        staff_id = request.POST.get('staff_id', '').strip().upper()
         password = request.POST.get('password', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         email = request.POST.get('email', '').strip()
-        if not username or not password:
-            error = 'Username and password are required.'
-        elif User.objects.filter(username=username).exists():
-            error = f'Username "{username}" already exists.'
+        if not staff_id or not password:
+            error = 'Staff ID and password are required.'
+        elif len(staff_id) < 3:
+            error = 'Staff ID must be at least 3 characters.'
+        elif User.objects.filter(username=staff_id).exists():
+            error = f'Staff ID "{staff_id}" is already taken.'
         else:
-            new_user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name, email=email, is_staff=True, is_active=True)
+            new_user = User.objects.create_user(
+                username=staff_id, password=password,
+                first_name=first_name, last_name=last_name,
+                email=email, is_staff=True, is_active=True
+            )
             AdminProfile.objects.create(user=new_user, role='admin', created_by=request.user)
-            messages.success(request, f'Admin "{username}" created.')
+            messages.success(request, f'Admin created — Staff ID: {staff_id} / Password: {password}')
             return redirect('superadmin_admins')
     return render(request, 'superadmin/create_admin.html', {'error': error})
 

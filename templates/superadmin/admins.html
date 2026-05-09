@@ -12,7 +12,7 @@
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:#f8f9fa">
         <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Admin</th>
-        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Username</th>
+        <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Staff ID (Login)</th>
         <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Email</th>
         <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Role</th>
         <th style="padding:.8rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;border-bottom:2px solid #e8ecf0">Action</th>
@@ -26,7 +26,7 @@
               <div><div style="font-weight:600;font-size:.87rem">{{ a.get_full_name|default:a.username }}</div></div>
             </div>
           </td>
-          <td style="padding:.9rem 1rem"><code style="font-size:.82rem">{{ a.username }}</code></td>
+          <td style="padding:.9rem 1rem"><code style="font-size:.82rem;background:#e8f0fe;color:#003087;padding:3px 8px;border-radius:5px">{{ a.username }}</code><br><small style="color:#888;font-size:.7rem">Staff ID (login)</small></td>
           <td style="padding:.9rem 1rem;font-size:.82rem;color:#666">{{ a.email|default:"—" }}</td>
           <td style="padding:.9rem 1rem">
             {% if a.admin_profile.role == 'superadmin' %}
