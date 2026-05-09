@@ -105,23 +105,13 @@ body{font-family:'Poppins',sans-serif;background:var(--school-blue-dark);overflo
   <div class="divider"></div>
 
   <div class="portal-cards">
-    <a href="{% url 'admin_login' %}" class="portal-card admin">
-      <div class="portal-icon"><i class="fas fa-shield-alt"></i></div>
-      <h3>Admin Portal</h3>
-      <p>Manage teachers, attendance, schedules and school operations.</p>
-      <span class="portal-btn">Enter Portal</span>
-    </a>
-    <a href="{% url 'teacher_register' %}" class="portal-card register">
-      <div class="portal-icon"><i class="fas fa-user-plus"></i></div>
-      <h3>Register</h3>
-      <p>New teacher? Create your profile and join the WTI staff system.</p>
-      <span class="portal-btn">Get Started</span>
+    <a href="{% url 'login' %}" class="portal-card admin">
+      <div class="portal-icon"><i class="fas fa-sign-in-alt"></i></div>
+      <h3>Login</h3>
+      <p>Staff login for teachers and administrators. Enter your Staff ID to access your portal.</p>
+      <span class="portal-btn">Login</span>
     </a>
   </div>
-
-  <p class="teacher-login-link">
-    Already registered? <a href="{% url 'teacher_login' %}">Teacher Login <i class="fas fa-arrow-right"></i></a>
-  </p>
 </div>
 
 <div class="welcome-footer">

@@ -72,31 +72,22 @@ def offline_page(request):
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 def teacher_register(request):
-    if request.method == 'POST':
-        form = TeacherRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
+    """Kept for backward compatibility — redirects to login."""
+    return redirect('login')
+
+
+def unified_login(request):
+    """Single login for both teachers and admins using Staff ID + password."""
+    if request.user.is_authenticated:
+        if request.user.is_staff:
             try:
-                user = form.save()
-                messages.success(request, f'Registration successful! Welcome {user.get_full_name()}. Awaiting admin approval.')
-                return redirect('teacher_login')
-            except Exception as e:
-                messages.error(request, f'Registration failed: {str(e)}')
-        else:
-            errs = []
-            for field, errors in form.errors.items():
-                label = form.fields[field].label if field in form.fields else field
-                for err in errors:
-                    errs.append(f'{label}: {err}' if label else err)
-            messages.error(request, 'Fix: ' + ' | '.join(errs) if errs else 'Please correct errors.')
-    else:
-        form = TeacherRegistrationForm()
-    return render(request, 'auth/register.html', {'form': form})
-
-
-def teacher_login(request):
-    """Login using Staff ID (e.g. WTI0001) and password."""
-    if request.user.is_authenticated and not request.user.is_staff:
+                if request.user.admin_profile.role == 'superadmin':
+                    return redirect('superadmin_dashboard')
+            except Exception:
+                pass
+            return redirect('admin_dashboard')
         return redirect('teacher_dashboard')
+
     error = None
     if request.method == 'POST':
         staff_id = request.POST.get('staff_id', '').strip().upper()
@@ -104,55 +95,47 @@ def teacher_login(request):
         if not staff_id or not password:
             error = 'Please enter your Staff ID and password.'
         else:
+            # Try teacher first
             try:
                 profile = TeacherProfile.objects.select_related('user').get(staff_id=staff_id)
                 user = authenticate(request, username=profile.user.username, password=password)
                 if user is None:
                     error = 'Invalid Staff ID or password.'
                 elif not profile.is_approved:
-                    error = 'Your account is pending admin approval.'
+                    error = 'Your account is not yet activated. Contact your admin.'
                 else:
                     login(request, user)
                     return redirect('teacher_dashboard')
             except TeacherProfile.DoesNotExist:
-                error = 'Invalid Staff ID or password.'
-    return render(request, 'auth/teacher_login.html', {'error': error})
+                # Try admin (staff_id = username for admins)
+                user = authenticate(request, username=staff_id, password=password)
+                if user is None:
+                    error = 'Invalid Staff ID or password.'
+                elif not user.is_staff:
+                    error = 'Invalid Staff ID or password.'
+                elif not user.is_active:
+                    error = 'This account is disabled.'
+                else:
+                    try:
+                        if user.admin_profile.role == 'superadmin':
+                            error = 'Please use the Super Admin Portal.'
+                        else:
+                            login(request, user)
+                            return redirect('admin_dashboard')
+                    except Exception:
+                        login(request, user)
+                        return redirect('admin_dashboard')
+    return render(request, 'auth/login.html', {'error': error})
+
+
+def teacher_login(request):
+    """Alias — redirects to unified login."""
+    return unified_login(request)
 
 
 def admin_login(request):
-    """Admin logs in with their Staff ID (username) and password."""
-    if request.user.is_authenticated and request.user.is_staff:
-        try:
-            if request.user.admin_profile.role == 'superadmin':
-                return redirect('superadmin_dashboard')
-        except Exception:
-            pass
-        return redirect('admin_dashboard')
-    error = None
-    if request.method == 'POST':
-        staff_id = request.POST.get('staff_id', '').strip()
-        password = request.POST.get('password', '').strip()
-        if not staff_id or not password:
-            error = 'Please enter your Staff ID and password.'
-        else:
-            user = authenticate(request, username=staff_id, password=password)
-            if user is None:
-                error = 'Invalid Staff ID or password.'
-            elif not user.is_staff:
-                error = 'This account does not have admin privileges.'
-            elif not user.is_active:
-                error = 'This account is disabled.'
-            else:
-                try:
-                    if user.admin_profile.role == 'superadmin':
-                        error = 'Please use the Super Admin Portal.'
-                    else:
-                        login(request, user)
-                        return redirect('admin_dashboard')
-                except Exception:
-                    login(request, user)
-                    return redirect('admin_dashboard')
-    return render(request, 'auth/admin_login.html', {'error': error})
+    """Alias — redirects to unified login."""
+    return unified_login(request)
 
 
 def superadmin_login(request):
@@ -577,6 +560,83 @@ def admin_notifications(request):
         form = NotificationForm()
     sent = Notification.objects.filter(sender=request.user).order_by('-created_at')[:30]
     return render(request, 'admin/notifications.html', {'form': form, 'sent_notifications': sent})
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_create_teacher(request):
+    """Admin creates teacher accounts with all details."""
+    from .models import DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS
+    error = None
+    success = None
+    if request.method == 'POST':
+        staff_id = request.POST.get('staff_id', '').strip().upper()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        password = request.POST.get('password', '').strip()
+        address = request.POST.get('address', '').strip()
+        qualification = request.POST.get('qualification', '').strip()
+        specialization = request.POST.get('specialization', '').strip()
+        years_exp = int(request.POST.get('years_of_experience', '0') or 0)
+        course_type = request.POST.get('course_type', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()
+        department = request.POST.get('department', '').strip()
+        previous_school = request.POST.get('previous_school', '').strip()
+        bio = request.POST.get('bio', '').strip()
+        emergency_contact = request.POST.get('emergency_contact', '').strip()
+        emergency_phone = request.POST.get('emergency_phone', '').strip()
+
+        if not all([staff_id, first_name, last_name, phone, gender, password, address, qualification, specialization, course_type, preferred_subject]):
+            error = 'Please fill all required fields.'
+        elif User.objects.filter(username=staff_id).exists():
+            error = f'Staff ID "{staff_id}" already exists.'
+        elif TeacherProfile.objects.filter(staff_id=staff_id).exists():
+            error = f'Staff ID "{staff_id}" already taken.'
+        else:
+            try:
+                new_user = User.objects.create_user(
+                    username=staff_id, password=password,
+                    first_name=first_name, last_name=last_name,
+                    email=email, is_active=True
+                )
+                profile_photo = request.FILES.get('profile_photo')
+                cv_doc = request.FILES.get('cv_document')
+                cert_doc = request.FILES.get('certificate_document')
+                id_doc = request.FILES.get('id_document')
+                TeacherProfile.objects.create(
+                    user=new_user, staff_id=staff_id,
+                    phone=phone, gender=gender, address=address,
+                    qualification=qualification, specialization=specialization,
+                    years_of_experience=years_exp, course_type=course_type,
+                    preferred_subject=preferred_subject, department=department,
+                    previous_school=previous_school, bio=bio,
+                    emergency_contact=emergency_contact, emergency_phone=emergency_phone,
+                    profile_photo=profile_photo, cv_document=cv_doc,
+                    certificate_document=cert_doc, id_document=id_doc,
+                    is_approved=True,
+                )
+                Notification.objects.create(
+                    recipient=new_user, sender=request.user,
+                    title='Account Created',
+                    message=f'Your teacher account has been created. Staff ID: {staff_id}. Use it to login.',
+                    notification_type='admin'
+                )
+                success = f'Teacher "{first_name} {last_name}" created with Staff ID: {staff_id}'
+            except Exception as e:
+                error = f'Error creating teacher: {str(e)}'
+
+    return render(request, 'admin/create_teacher.html', {
+        'error': error, 'success': success,
+        'dept_choices': DEPARTMENT_CHOICES,
+        'course_types': COURSE_TYPE_CHOICES,
+        'genders': GENDER_CHOICES,
+        'qualifications': QUALIFICATION_CHOICES,
+        'elective_subjects': ELECTIVE_SUBJECTS,
+        'dept_subjects': DEPARTMENT_SUBJECTS,
+    })
 
 
 @login_required

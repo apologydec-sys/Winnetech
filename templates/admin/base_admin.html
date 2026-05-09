@@ -49,6 +49,9 @@
         <i class="fas fa-chalkboard-teacher"></i> Teachers
         {% if pending_count %}<span class="badge bg-warning text-dark">{{ pending_count }}</span>{% endif %}
       </a>
+      <a href="{% url 'admin_create_teacher' %}" class="sidebar-link {% block nav_create_teacher %}{% endblock %}">
+        <i class="fas fa-user-plus"></i> Add Teacher
+      </a>
       <a href="{% url 'admin_attendance' %}" class="sidebar-link {% block nav_attendance %}{% endblock %}">
         <i class="fas fa-clipboard-check"></i> Attendance
       </a>
