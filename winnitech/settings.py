@@ -103,13 +103,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Cloudinary for persistent media storage on Render ────────────────────────
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
-if CLOUDINARY_URL:
-    import cloudinary
-    import cloudinary.uploader
-    import cloudinary.api
-    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+if CLOUDINARY_URL and CLOUDINARY_URL.startswith('cloudinary://'):
+    try:
+        import cloudinary
+        cloudinary.config(cloudinary_url=CLOUDINARY_URL)
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    except Exception:
+        pass
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
