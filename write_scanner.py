@@ -1,4 +1,4 @@
-{% load static %}
+T = """{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,7 +137,7 @@
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-camera"></i> Tap to Start Camera';
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          showStatus('\u26a0\ufe0f Camera permission denied. Please allow camera access and try again.', 'error');
+          showStatus('\\u26a0\\ufe0f Camera permission denied. Please allow camera access and try again.', 'error');
           document.getElementById('permGuide').style.display = 'block';
         } else if (err.name === 'NotFoundError') {
           showStatus('No camera found on this device.', 'error');
@@ -170,7 +170,7 @@
         if (scanned) return;
         scanned = true;
         html5Qrcode.stop().catch(function(){});
-        showStatus('\u2705 QR Code detected! Redirecting...', 'success');
+        showStatus('\\u2705 QR Code detected! Redirecting...', 'success');
         // Play success beep
         try {
           var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -190,7 +190,7 @@
       btn.innerHTML = '<i class="fas fa-stop-circle"></i> Stop Camera';
       btn.disabled = false;
       btn.onclick = stopScanner;
-      showStatus('\ud83d\udcf7 Camera active — point at QR code', 'info');
+      showStatus('\\ud83d\\udcf7 Camera active — point at QR code', 'info');
     }).catch(function(err) {
       scanning = false;
       var btn = document.getElementById('startBtn');
@@ -236,3 +236,7 @@
   </script>
 </body>
 </html>
+"""
+with open('templates/qr/scanner.html', 'w', encoding='utf-8') as f:
+    f.write(T)
+print('scanner.html written')
