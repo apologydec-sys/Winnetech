@@ -56,6 +56,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.csrf',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.admin_context',
@@ -142,5 +143,15 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.onrender.com',
     'https://winnetech.onrender.com',
     'http://localhost:8000',
+    'https://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://127.0.0.1:8000',
+    'http://0.0.0.0:8000',
+    'https://0.0.0.0:8000',
+]
+# Allow extra trusted origins from environment for deployment-specific hostnames
+CSRF_TRUSTED_ORIGINS += [
+    origin.strip()
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
 ]

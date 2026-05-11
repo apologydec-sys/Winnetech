@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate
 from django.db import transaction
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse
@@ -136,6 +137,7 @@ def teacher_register(request):
     return redirect('login')
 
 
+@ensure_csrf_cookie
 def unified_login(request):
     """Single login for both teachers and admins using Staff ID + password."""
     if request.user.is_authenticated:
@@ -198,6 +200,7 @@ def admin_login(request):
     return unified_login(request)
 
 
+@ensure_csrf_cookie
 def superadmin_login(request):
     if request.user.is_authenticated and is_superadmin(request.user):
         return redirect('superadmin_dashboard')
