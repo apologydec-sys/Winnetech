@@ -985,26 +985,38 @@ def admin_qr_view(request):
 @login_required
 @user_passes_test(is_superadmin)
 def generate_qr(request):
+    error = None
     if request.method == 'POST':
         form = QRCodeForm(request.POST)
         if form.is_valid():
-            qr_obj = form.save(commit=False)
-            qr_obj.created_by = request.user
-            qr_obj.save()
-            scan_path = f'/scan/school/{qr_obj.code}/' if qr_obj.qr_type == 'school_attendance' else f'/scan/lesson/{qr_obj.code}/'
-            scan_url = request.build_absolute_uri(scan_path)
-            img = qrcode.make(scan_url)
-            buf = __import__('io').BytesIO()
-            img.save(buf, format='PNG')
-            buf.seek(0)
-            qr_obj.qr_image.save(f'qr_{qr_obj.code}.png', ContentFile(buf.read()), save=True)
-            messages.success(request, f'{qr_obj.get_qr_type_display()} QR Code generated! Valid for 5 years.')
-            return redirect('qr_detail_sa', qr_id=qr_obj.id)
+            try:
+                qr_obj = form.save(commit=False)
+                qr_obj.created_by = request.user
+                qr_obj.save()
+                scan_path = f'/scan/school/{qr_obj.code}/' if qr_obj.qr_type == 'school_attendance' else f'/scan/lesson/{qr_obj.code}/'
+                scan_url = request.build_absolute_uri(scan_path)
+                img = qrcode.make(scan_url)
+                buf = io.BytesIO()
+                img.save(buf, format='PNG')
+                buf.seek(0)
+                qr_obj.qr_image.save(f'qr_{qr_obj.code}.png', ContentFile(buf.read()), save=True)
+                messages.success(request, f'{qr_obj.get_qr_type_display()} QR Code generated! Valid for 5 years.')
+                return redirect('qr_detail_sa', qr_id=qr_obj.id)
+            except Exception as exc:
+                logger.exception('QR generation failed')
+                error = 'QR code generation failed. Please try again or contact support.'
+        else:
+            error = 'Please correct the errors shown below.'
     else:
         form = QRCodeForm()
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
     lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
-    return render(request, 'superadmin/qr_generate.html', {'form': form, 'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
+    return render(request, 'superadmin/qr_generate.html', {
+        'form': form,
+        'school_qrs': school_qrs,
+        'lesson_qrs': lesson_qrs,
+        'error': error,
+    })
 
 
 @login_required
@@ -1014,10 +1026,14 @@ def qr_detail(request, qr_id):
     qr_obj = get_object_or_404(QRCode, id=qr_id)
     scan_path = f'/scan/school/{qr_obj.code}/' if qr_obj.qr_type == 'school_attendance' else f'/scan/lesson/{qr_obj.code}/'
     scan_url = request.build_absolute_uri(scan_path)
-    img = qrcode.make(scan_url)
-    buf = io.BytesIO()
-    img.save(buf, format='PNG')
-    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    qr_b64 = None
+    try:
+        img = qrcode.make(scan_url)
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        logger.exception('Failed to generate QR detail image for QR id %s', qr_id)
     qr_list_url = reverse('generate_qr') if is_superadmin(request.user) else reverse('admin_qr_view')
     return render(request, 'admin/qr_detail.html', {
         'qr_obj': qr_obj,

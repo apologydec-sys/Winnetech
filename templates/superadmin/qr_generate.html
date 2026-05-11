@@ -14,16 +14,40 @@
         <h5><i class="fas fa-qrcode"></i> Generate QR Code</h5>
       </div>
       <div class="wti-card-body">
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} auto-dismiss alert-dismissible fade show" style="font-size:.85rem;border-radius:10px">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-danger" style="font-size:.85rem;border-radius:10px">
+          {{ error }}
+        </div>
+        {% endif %}
         <form method="post" novalidate>
           {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="font-size:.85rem;border-radius:10px">
+            {{ form.non_field_errors }}
+          </div>
+          {% endif %}
           <div class="mb-3">
             <label class="form-label">QR Code Type *</label>
             {{ form.qr_type }}
+            {% if form.qr_type.errors %}
+            <div class="invalid-feedback d-block">{{ form.qr_type.errors|join:' ' }}</div>
+            {% endif %}
             <small class="text-muted">School Attendance = check-in to school. Lesson = lesson completion.</small>
           </div>
           <div class="mb-3">
             <label class="form-label">Label *</label>
             {{ form.label }}
+            {% if form.label.errors %}
+            <div class="invalid-feedback d-block">{{ form.label.errors|join:' ' }}</div>
+            {% endif %}
           </div>
           <div class="alert alert-info" style="font-size:.8rem;border-radius:10px">
             <i class="fas fa-info-circle me-2"></i>
