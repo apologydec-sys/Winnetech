@@ -10,7 +10,8 @@
   </div>
   <div class="wti-card-body">
     {% if success %}<div class="alert alert-success" style="font-size:.83rem;border-radius:10px"><i class="fas fa-check-circle me-2"></i>{{ success }}</div>{% endif %}
-    {% if errors %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>Please fix the errors below.</div>{% endif %}
+    {% if errors.save %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>{{ errors.save }}</div>{% endif %}
+    {% if errors and not errors.save %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>Please fix the errors below.</div>{% endif %}
     <form method="post" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
       
@@ -46,7 +47,8 @@
         </div>
         <div class="col-md-6">
           <label class="form-label">Date of Birth</label>
-          <input type="date" name="date_of_birth" class="form-control" value="{{ post.date_of_birth|default:profile.date_of_birth }}">
+          <input type="date" name="date_of_birth" class="form-control {% if errors.date_of_birth %}is-invalid{% endif %}" value="{{ dob_input_value }}">
+          {% if errors.date_of_birth %}<div class="invalid-feedback d-block">{{ errors.date_of_birth }}</div>{% endif %}
         </div>
         <div class="col-12">
           <label class="form-label">Residential Address *</label>
@@ -96,8 +98,10 @@
       <input type="hidden" name="course_type" id="hct" value="{{ post.course_type|default:profile.course_type }}">
       <input type="hidden" name="preferred_subject" id="hs" value="{{ post.preferred_subject|default:profile.preferred_subject }}">
       <input type="hidden" name="department" id="hd" value="{{ post.department|default:profile.department }}">
-      {% if errors.course_type or errors.preferred_subject %}
-      <div class="alert alert-danger" style="font-size:.82rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>Please select a course type and subject.</div>
+      {% if errors.course_type or errors.preferred_subject or errors.department %}
+      <div class="alert alert-danger" style="font-size:.82rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>
+        {% if errors.department %}{{ errors.department }}{% else %}Please select a course type and subject.{% endif %}
+      </div>
       {% endif %}
       <div class="row g-2 mb-3">
         <div class="col-6">

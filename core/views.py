@@ -27,6 +27,60 @@ from .forms import (
 
 logger = logging.getLogger(__name__)
 
+# Teacher profile forms — keep under DB limits (PostgreSQL errors otherwise).
+_TEACHER_MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+def _dob_input_value(post_data, profile):
+    raw = post_data.get('date_of_birth', '').strip()
+    if raw:
+        return raw
+    if getattr(profile, 'date_of_birth', None):
+        return profile.date_of_birth.isoformat()
+    return ''
+
+
+def _parse_dob_or_error(raw, errors, field='date_of_birth'):
+    raw = (raw or '').strip()
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        errors[field] = 'Please enter a valid date of birth.'
+        return None
+
+
+def _safe_years_experience(raw):
+    s = (raw or '').strip()
+    if not s.isdigit():
+        return 0
+    return min(int(s), 2147483647)
+
+
+def _validate_teacher_profile_lengths(data, errors):
+    """Clip or reject fields that exceed model max_length (avoids DB DataError → 500)."""
+    limits = [
+        ('first_name', 150),
+        ('last_name', 150),
+        ('phone', 20),
+        ('emergency_phone', 20),
+        ('emergency_contact', 100),
+        ('specialization', 200),
+        ('previous_school', 200),
+    ]
+    for key, max_len in limits:
+        val = data.get(key, '') or ''
+        if len(val) > max_len:
+            errors[key] = f'This field must be at most {max_len} characters.'
+
+
+def _validate_teacher_uploads(request_files, errors):
+    for name in ('profile_photo', 'cv_document', 'certificate_document', 'id_document'):
+        f = request_files.get(name)
+        if f and getattr(f, 'size', 0) > _TEACHER_MAX_UPLOAD_BYTES:
+            errors[name] = 'File is too large (maximum 10 MB per file).'
+
 
 # ── Role checks ───────────────────────────────────────────────────────────────
 
@@ -243,14 +297,14 @@ def teacher_complete_profile(request):
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         gender = request.POST.get('gender', '').strip()
-        date_of_birth = request.POST.get('date_of_birth', '').strip() or None
+        dob_raw = request.POST.get('date_of_birth', '').strip()
         address = request.POST.get('address', '').strip()
         qualification = request.POST.get('qualification', '').strip()
         specialization = request.POST.get('specialization', '').strip()
         years_exp = request.POST.get('years_of_experience', '0').strip()
         course_type = request.POST.get('course_type', '').strip()
-        preferred_subject = request.POST.get('preferred_subject', '').strip()
-        department = request.POST.get('department', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()[:100]
+        department = request.POST.get('department', '').strip()[:100]
         previous_school = request.POST.get('previous_school', '').strip()
         bio = request.POST.get('bio', '').strip()
         emergency_contact = request.POST.get('emergency_contact', '').strip()
@@ -267,30 +321,37 @@ def teacher_complete_profile(request):
         if not specialization: errors['specialization'] = 'Specialization is required.'
         if not course_type: errors['course_type'] = 'Please select a course type.'
         if not preferred_subject: errors['preferred_subject'] = 'Please select your subject.'
+        if course_type == 'departmental' and not department:
+            errors['department'] = 'Please select your department.'
+
+        _validate_teacher_profile_lengths({
+            'first_name': first_name, 'last_name': last_name, 'phone': phone,
+            'emergency_phone': emergency_phone, 'emergency_contact': emergency_contact,
+            'specialization': specialization, 'previous_school': previous_school,
+        }, errors)
+        _validate_teacher_uploads(request.FILES, errors)
+        date_of_birth = _parse_dob_or_error(dob_raw, errors)
 
         if not errors:
-            # Save user name
             user = request.user
-            user.first_name = first_name
-            user.last_name = last_name
+            user.first_name = first_name[:150]
+            user.last_name = last_name[:150]
             if email:
-                user.email = email
-            user.save()
-            # Save profile
-            profile.phone = phone
+                user.email = email[:254]
+            profile.phone = phone[:20]
             profile.gender = gender
             profile.date_of_birth = date_of_birth
             profile.address = address
             profile.qualification = qualification
-            profile.specialization = specialization
-            profile.years_of_experience = int(years_exp) if years_exp.isdigit() else 0
+            profile.specialization = specialization[:200]
+            profile.years_of_experience = _safe_years_experience(years_exp)
             profile.course_type = course_type
             profile.preferred_subject = preferred_subject
-            profile.department = department
-            profile.previous_school = previous_school
+            profile.department = department if course_type == 'departmental' else ''
+            profile.previous_school = previous_school[:200]
             profile.bio = bio
-            profile.emergency_contact = emergency_contact
-            profile.emergency_phone = emergency_phone
+            profile.emergency_contact = emergency_contact[:100]
+            profile.emergency_phone = emergency_phone[:20]
             profile.profile_complete = True
             if request.FILES.get('profile_photo'):
                 profile.profile_photo = request.FILES['profile_photo']
@@ -300,14 +361,29 @@ def teacher_complete_profile(request):
                 profile.certificate_document = request.FILES['certificate_document']
             if request.FILES.get('id_document'):
                 profile.id_document = request.FILES['id_document']
-            profile.save()
+            try:
+                with transaction.atomic():
+                    user.save()
+                    profile.save()
+            except Exception:
+                logger.exception('teacher_complete_profile save failed')
+                errors['save'] = (
+                    'We could not save your profile. If you uploaded files, try smaller images '
+                    '(under 10 MB each) or skip documents for now.'
+                )
+                profile.refresh_from_db()
+                user.refresh_from_db()
+
+        if not errors:
             messages.success(request, f'Welcome {first_name}! Your profile is complete.')
             return redirect('teacher_dashboard')
 
+    dob_input_value = _dob_input_value(request.POST, profile)
     return render(request, 'teacher/complete_profile.html', {
         'profile': profile,
         'errors': errors,
         'post': request.POST,
+        'dob_input_value': dob_input_value,
         'dept_choices': DEPARTMENT_CHOICES,
         'course_types': COURSE_TYPE_CHOICES,
         'genders': GENDER_CHOICES,
@@ -340,14 +416,14 @@ def teacher_update_profile(request):
         specialization = request.POST.get('specialization', '').strip()
         years_exp = request.POST.get('years_of_experience', '0').strip()
         course_type = request.POST.get('course_type', '').strip()
-        preferred_subject = request.POST.get('preferred_subject', '').strip()
-        department = request.POST.get('department', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()[:100]
+        department = request.POST.get('department', '').strip()[:100]
         previous_school = request.POST.get('previous_school', '').strip()
         bio = request.POST.get('bio', '').strip()
         emergency_contact = request.POST.get('emergency_contact', '').strip()
         emergency_phone = request.POST.get('emergency_phone', '').strip()
         email = request.POST.get('email', '').strip()
-        date_of_birth = request.POST.get('date_of_birth', '').strip() or None
+        dob_raw = request.POST.get('date_of_birth', '').strip()
 
         if not first_name: errors['first_name'] = 'First name is required.'
         if not last_name: errors['last_name'] = 'Last name is required.'
@@ -358,28 +434,37 @@ def teacher_update_profile(request):
         if not specialization: errors['specialization'] = 'Specialization is required.'
         if not course_type: errors['course_type'] = 'Course type is required.'
         if not preferred_subject: errors['preferred_subject'] = 'Subject is required.'
+        if course_type == 'departmental' and not department:
+            errors['department'] = 'Please select your department.'
+
+        _validate_teacher_profile_lengths({
+            'first_name': first_name, 'last_name': last_name, 'phone': phone,
+            'emergency_phone': emergency_phone, 'emergency_contact': emergency_contact,
+            'specialization': specialization, 'previous_school': previous_school,
+        }, errors)
+        _validate_teacher_uploads(request.FILES, errors)
+        date_of_birth = _parse_dob_or_error(dob_raw, errors)
 
         if not errors:
             user = request.user
-            user.first_name = first_name
-            user.last_name = last_name
+            user.first_name = first_name[:150]
+            user.last_name = last_name[:150]
             if email:
-                user.email = email
-            user.save()
-            profile.phone = phone
+                user.email = email[:254]
+            profile.phone = phone[:20]
             profile.gender = gender
             profile.date_of_birth = date_of_birth
             profile.address = address
             profile.qualification = qualification
-            profile.specialization = specialization
-            profile.years_of_experience = int(years_exp) if years_exp.isdigit() else 0
+            profile.specialization = specialization[:200]
+            profile.years_of_experience = _safe_years_experience(years_exp)
             profile.course_type = course_type
             profile.preferred_subject = preferred_subject
-            profile.department = department
-            profile.previous_school = previous_school
+            profile.department = department if course_type == 'departmental' else ''
+            profile.previous_school = previous_school[:200]
             profile.bio = bio
-            profile.emergency_contact = emergency_contact
-            profile.emergency_phone = emergency_phone
+            profile.emergency_contact = emergency_contact[:100]
+            profile.emergency_phone = emergency_phone[:20]
             if request.FILES.get('profile_photo'):
                 profile.profile_photo = request.FILES['profile_photo']
             if request.FILES.get('cv_document'):
@@ -388,13 +473,26 @@ def teacher_update_profile(request):
                 profile.certificate_document = request.FILES['certificate_document']
             if request.FILES.get('id_document'):
                 profile.id_document = request.FILES['id_document']
-            profile.save()
-            success = 'Profile updated successfully!'
+            try:
+                with transaction.atomic():
+                    user.save()
+                    profile.save()
+                success = 'Profile updated successfully!'
+            except Exception:
+                logger.exception('teacher_update_profile save failed')
+                errors['save'] = (
+                    'Could not save changes. Try smaller files (under 10 MB each) or remove optional uploads.'
+                )
+                profile.refresh_from_db()
+                user.refresh_from_db()
 
+    dob_input_value = _dob_input_value(request.POST, profile)
     return render(request, 'teacher/update_profile.html', {
         'profile': profile,
         'errors': errors,
         'success': success,
+        'post': request.POST,
+        'dob_input_value': dob_input_value,
         'dept_choices': DEPARTMENT_CHOICES,
         'course_types': COURSE_TYPE_CHOICES,
         'genders': GENDER_CHOICES,

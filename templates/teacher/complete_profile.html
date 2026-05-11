@@ -27,6 +27,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
     <p>Staff ID: <strong style="color:#003087">{{ profile.staff_id }}</strong> — Please fill in your details to continue</p>
   </div>
   {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags }}" style="font-size:.83rem;border-radius:10px">{{ m }}</div>{% endfor %}{% endif %}
+  {% if errors.save %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>{{ errors.save }}</div>{% endif %}
   <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     
@@ -62,7 +63,8 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
         </div>
         <div class="col-md-6">
           <label class="form-label">Date of Birth</label>
-          <input type="date" name="date_of_birth" class="form-control" value="{{ post.date_of_birth|default:profile.date_of_birth }}">
+          <input type="date" name="date_of_birth" class="form-control {% if errors.date_of_birth %}is-invalid{% endif %}" value="{{ dob_input_value }}">
+          {% if errors.date_of_birth %}<div class="invalid-feedback d-block">{{ errors.date_of_birth }}</div>{% endif %}
         </div>
         <div class="col-12">
           <label class="form-label">Residential Address *</label>
@@ -112,8 +114,10 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
       <input type="hidden" name="course_type" id="hct" value="{{ post.course_type|default:profile.course_type }}">
       <input type="hidden" name="preferred_subject" id="hs" value="{{ post.preferred_subject|default:profile.preferred_subject }}">
       <input type="hidden" name="department" id="hd" value="{{ post.department|default:profile.department }}">
-      {% if errors.course_type or errors.preferred_subject %}
-      <div class="alert alert-danger" style="font-size:.82rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>Please select a course type and subject.</div>
+      {% if errors.course_type or errors.preferred_subject or errors.department %}
+      <div class="alert alert-danger" style="font-size:.82rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>
+        {% if errors.department %}{{ errors.department }}{% else %}Please select a course type and subject.{% endif %}
+      </div>
       {% endif %}
       <div class="row g-2 mb-3">
         <div class="col-6">
@@ -156,20 +160,24 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Profile Photo</label>
-          <input type="file" name="profile_photo" class="form-control" accept="image/*">
+          <input type="file" name="profile_photo" class="form-control {% if errors.profile_photo %}is-invalid{% endif %}" accept="image/*">
+          {% if errors.profile_photo %}<div class="invalid-feedback d-block">{{ errors.profile_photo }}</div>{% endif %}
           {% if profile.profile_photo %}<small class="text-muted">Current: {{ profile.profile_photo.name|truncatechars:30 }}</small>{% endif %}
         </div>
         <div class="col-md-6">
           <label class="form-label">CV / Resume</label>
-          <input type="file" name="cv_document" class="form-control" accept=".pdf,.doc,.docx">
+          <input type="file" name="cv_document" class="form-control {% if errors.cv_document %}is-invalid{% endif %}" accept=".pdf,.doc,.docx">
+          {% if errors.cv_document %}<div class="invalid-feedback d-block">{{ errors.cv_document }}</div>{% endif %}
         </div>
         <div class="col-md-6">
           <label class="form-label">Certificate</label>
-          <input type="file" name="certificate_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+          <input type="file" name="certificate_document" class="form-control {% if errors.certificate_document %}is-invalid{% endif %}" accept=".pdf,.jpg,.jpeg,.png">
+          {% if errors.certificate_document %}<div class="invalid-feedback d-block">{{ errors.certificate_document }}</div>{% endif %}
         </div>
         <div class="col-md-6">
           <label class="form-label">National ID / Passport</label>
-          <input type="file" name="id_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+          <input type="file" name="id_document" class="form-control {% if errors.id_document %}is-invalid{% endif %}" accept=".pdf,.jpg,.jpeg,.png">
+          {% if errors.id_document %}<div class="invalid-feedback d-block">{{ errors.id_document }}</div>{% endif %}
         </div>
       </div>
 
