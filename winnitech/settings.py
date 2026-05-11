@@ -1,8 +1,11 @@
 """
 Django settings for Winneba Technical Institute Staff Management System
 """
+import logging
 import os
 from pathlib import Path
+
+_logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,14 +106,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Cloudinary for persistent media storage on Render ────────────────────────
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
+if CLOUDINARY_URL and not CLOUDINARY_URL.startswith('cloudinary://'):
+    _logger.warning(
+        'CLOUDINARY_URL is set but does not start with cloudinary:// — '
+        'uploads will use local disk (ephemeral on many hosts; set a valid URL).'
+    )
 if CLOUDINARY_URL and CLOUDINARY_URL.startswith('cloudinary://'):
     try:
         import cloudinary
         cloudinary.config(cloudinary_url=CLOUDINARY_URL)
         DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
         INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
-    except Exception:
-        pass
+    except Exception as exc:
+        _logger.exception(
+            'Cloudinary failed to load; using local MEDIA_ROOT for uploads (%s). '
+            'Fix CLOUDINARY_URL / install cloudinary packages.',
+            exc,
+        )
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
