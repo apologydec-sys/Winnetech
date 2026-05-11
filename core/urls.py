@@ -39,6 +39,7 @@ urlpatterns = [
     # Super admin QR generation
     path('superadmin/qr/', views.generate_qr, name='generate_qr'),
     path('superadmin/qr/<int:qr_id>/', views.qr_detail_sa, name='qr_detail_sa'),
+    path('superadmin/qr/<int:qr_id>/delete/', views.delete_qr, name='delete_qr'),
     path('api/notifications/', views.get_notifications_api, name='notifications_api'),
     path('api/schedule-reminders/', views.get_schedule_reminders_api, name='schedule_reminders_api'),
     path('api/schedule/<int:schedule_id>/complete/', views.mark_schedule_complete, name='mark_schedule_complete'),

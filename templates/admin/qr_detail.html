@@ -45,13 +45,21 @@
         </div>
 
         <!-- Actions -->
-        <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <div class="d-flex gap-2 justify-content-center flex-wrap align-items-center">
           <button class="btn-gold px-4 py-2 rounded-3" onclick="printQR()">
             <i class="fas fa-print me-2"></i> Print QR Code
           </button>
-          <a href="{% url 'generate_qr' %}" class="btn-outline-gold px-4 py-2 rounded-3">
+          <a href="{{ qr_list_url }}" class="btn-outline-gold px-4 py-2 rounded-3">
             <i class="fas fa-arrow-left me-2"></i> Back
           </a>
+          {% if show_qr_delete %}
+          <form method="post" action="{% url 'delete_qr' qr_obj.id %}" class="d-inline" onsubmit="return confirm('Delete this QR code permanently? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger px-4 py-2 rounded-3">
+              <i class="fas fa-trash-alt me-2"></i> Delete QR Code
+            </button>
+          </form>
+          {% endif %}
         </div>
       </div>
     </div>

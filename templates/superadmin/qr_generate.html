@@ -58,7 +58,14 @@
                 {% if qr.is_valid_today %}<span class="status-badge approved">Active</span>
                 {% else %}<span class="status-badge absent">Inactive</span>{% endif %}
               </td>
-              <td><a href="{% url 'qr_detail' qr.id %}" class="btn btn-sm btn-outline-primary rounded-pill" style="font-size:.73rem"><i class="fas fa-eye me-1"></i>View</a></td>
+              <td>
+                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                  <a href="{% url 'qr_detail_sa' qr.id %}" class="btn btn-sm btn-outline-primary rounded-pill" style="font-size:.73rem"><i class="fas fa-eye me-1"></i>View</a>
+                  <form method="post" action="{% url 'delete_qr' qr.id %}" class="d-inline m-0" onsubmit="return confirm('Permanently delete this QR code?');">{% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" style="font-size:.73rem"><i class="fas fa-trash-alt me-1"></i>Delete</button>
+                  </form>
+                </div>
+              </td>
             </tr>
             {% empty %}<tr><td colspan="5" class="text-center text-muted py-3" style="font-size:.83rem">No school attendance QR codes yet</td></tr>{% endfor %}
           </tbody>
@@ -85,7 +92,14 @@
                 {% if qr.is_valid_today %}<span class="status-badge approved">Active</span>
                 {% else %}<span class="status-badge absent">Inactive</span>{% endif %}
               </td>
-              <td><a href="{% url 'qr_detail' qr.id %}" class="btn btn-sm btn-outline-success rounded-pill" style="font-size:.73rem"><i class="fas fa-eye me-1"></i>View</a></td>
+              <td>
+                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                  <a href="{% url 'qr_detail_sa' qr.id %}" class="btn btn-sm btn-outline-success rounded-pill" style="font-size:.73rem"><i class="fas fa-eye me-1"></i>View</a>
+                  <form method="post" action="{% url 'delete_qr' qr.id %}" class="d-inline m-0" onsubmit="return confirm('Permanently delete this QR code?');">{% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" style="font-size:.73rem"><i class="fas fa-trash-alt me-1"></i>Delete</button>
+                  </form>
+                </div>
+              </td>
             </tr>
             {% empty %}<tr><td colspan="5" class="text-center text-muted py-3" style="font-size:.83rem">No lesson QR codes yet</td></tr>{% endfor %}
           </tbody>

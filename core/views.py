@@ -3,6 +3,7 @@ import io
 import base64
 from datetime import datetime, date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -655,6 +656,22 @@ def qr_detail_sa(request, qr_id):
 
 
 @login_required
+@user_passes_test(is_superadmin)
+def delete_qr(request, qr_id):
+    """Permanently remove a generated QR code (superadmin only)."""
+    qr_obj = get_object_or_404(QRCode, id=qr_id)
+    if request.method != 'POST':
+        messages.error(request, 'To delete a QR code, use the delete action from the QR management page.')
+        return redirect('qr_detail_sa', qr_id=qr_id)
+    label = qr_obj.label
+    if qr_obj.qr_image:
+        qr_obj.qr_image.delete(save=False)
+    qr_obj.delete()
+    messages.success(request, f'QR code "{label}" was permanently deleted.')
+    return redirect('generate_qr')
+
+
+@login_required
 @user_passes_test(is_admin)
 def admin_teachers(request):
     teachers = TeacherProfile.objects.select_related('user').all().order_by('-date_joined')
@@ -856,7 +873,7 @@ def generate_qr(request):
             buf.seek(0)
             qr_obj.qr_image.save(f'qr_{qr_obj.code}.png', ContentFile(buf.read()), save=True)
             messages.success(request, f'{qr_obj.get_qr_type_display()} QR Code generated! Valid for 5 years.')
-            return redirect('qr_detail', qr_id=qr_obj.id)
+            return redirect('qr_detail_sa', qr_id=qr_obj.id)
     else:
         form = QRCodeForm()
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
@@ -875,7 +892,14 @@ def qr_detail(request, qr_id):
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     qr_b64 = base64.b64encode(buf.getvalue()).decode()
-    return render(request, 'admin/qr_detail.html', {'qr_obj': qr_obj, 'scan_url': scan_url, 'qr_b64': qr_b64})
+    qr_list_url = reverse('generate_qr') if is_superadmin(request.user) else reverse('admin_qr_view')
+    return render(request, 'admin/qr_detail.html', {
+        'qr_obj': qr_obj,
+        'scan_url': scan_url,
+        'qr_b64': qr_b64,
+        'show_qr_delete': is_superadmin(request.user),
+        'qr_list_url': qr_list_url,
+    })
 
 
 # ── API ───────────────────────────────────────────────────────────────────────
