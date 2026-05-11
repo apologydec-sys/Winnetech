@@ -2,15 +2,18 @@ import qrcode
 import io
 import base64
 from datetime import datetime, date, timedelta
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate
+from django.db import transaction
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, ProtectedError
 from django.core.files.base import ContentFile
 
 from .models import (
@@ -21,6 +24,8 @@ from .forms import (
     TeacherRegistrationForm,
     NotificationForm, TimetableEntryForm, ClassScheduleForm, QRCodeForm
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ── Role checks ───────────────────────────────────────────────────────────────
@@ -664,9 +669,29 @@ def delete_qr(request, qr_id):
         messages.error(request, 'To delete a QR code, use the delete action from the QR management page.')
         return redirect('qr_detail_sa', qr_id=qr_id)
     label = qr_obj.label
-    if qr_obj.qr_image:
-        qr_obj.qr_image.delete(save=False)
-    qr_obj.delete()
+    pk = qr_obj.pk
+    try:
+        with transaction.atomic():
+            # Clear FK refs first (handles any DB quirks; Attendance uses SET_NULL).
+            Attendance.objects.filter(school_qr_id=pk).update(school_qr=None)
+            Attendance.objects.filter(lesson_qr_id=pk).update(lesson_qr=None)
+
+            img = qr_obj.qr_image
+            if getattr(img, 'name', None):
+                try:
+                    img.delete(save=False)
+                except Exception as exc:
+                    logger.warning('QR image delete skipped (id=%s): %s', pk, exc)
+
+            qr_obj.delete()
+    except ProtectedError:
+        messages.error(request, 'This QR code cannot be deleted because other records depend on it.')
+        return redirect('qr_detail_sa', qr_id=qr_id)
+    except Exception:
+        logger.exception('delete_qr failed for id=%s', qr_id)
+        messages.error(request, 'Deleting this QR code failed. Try again later.')
+        return redirect('qr_detail_sa', qr_id=qr_id)
+
     messages.success(request, f'QR code "{label}" was permanently deleted.')
     return redirect('generate_qr')
 
