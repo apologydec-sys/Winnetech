@@ -6,7 +6,7 @@ from .models import (
     TeacherProfile, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS,
     DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES,
     QUALIFICATION_CHOICES, TimetableEntry, Notification,
-    QRCode, ClassSchedule
+    QRCode, ClassSchedule, SchoolLocation
 )
 
 # All valid subject values for server-side validation
@@ -264,4 +264,17 @@ class QRCodeForm(forms.ModelForm):
         widgets = {
             'qr_type': forms.Select(attrs={'class': 'form-select'}),
             'label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Main Gate QR / Classroom QR'}),
+        }
+
+
+class SchoolLocationForm(forms.ModelForm):
+    class Meta:
+        model = SchoolLocation
+        fields = ['name', 'latitude', 'longitude', 'allowed_radius', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Main Campus'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'placeholder': 'e.g. 5.6037'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'placeholder': 'e.g. -0.1870'}),
+            'allowed_radius': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Radius in meters'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

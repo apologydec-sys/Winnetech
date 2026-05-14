@@ -36,6 +36,11 @@ urlpatterns = [
     # QR view only for admin (no generation)
     path('admin-dashboard/qr/', views.admin_qr_view, name='admin_qr_view'),
     path('admin-dashboard/qr/<int:qr_id>/', views.qr_detail, name='qr_detail'),
+    # School location management
+    path('admin-dashboard/locations/', views.school_location_list, name='school_location_list'),
+    path('admin-dashboard/locations/create/', views.school_location_create, name='school_location_create'),
+    path('admin-dashboard/locations/<int:location_id>/edit/', views.school_location_update, name='school_location_update'),
+    path('admin-dashboard/locations/<int:location_id>/delete/', views.school_location_delete, name='school_location_delete'),
     # Super admin QR generation
     path('superadmin/qr/', views.generate_qr, name='generate_qr'),
     path('superadmin/qr/<int:qr_id>/', views.qr_detail_sa, name='qr_detail_sa'),

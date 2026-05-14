@@ -19,11 +19,11 @@ from django.core.files.base import ContentFile
 
 from .models import (
     TeacherProfile, Attendance, QRCode, Notification,
-    TimetableEntry, ClassSchedule, AdminProfile
+    TimetableEntry, ClassSchedule, AdminProfile, SchoolLocation
 )
 from .forms import (
     TeacherRegistrationForm,
-    NotificationForm, TimetableEntryForm, ClassScheduleForm, QRCodeForm
+    NotificationForm, TimetableEntryForm, ClassScheduleForm, QRCodeForm, SchoolLocationForm
 )
 
 logger = logging.getLogger(__name__)
@@ -583,6 +583,34 @@ def scan_school_qr(request, qr_uuid):
     except TeacherProfile.DoesNotExist:
         return render(request, 'qr/scan_result.html', {'success': False, 'message': 'Teacher profile not found.'})
 
+    # Location validation
+    user_lat = request.GET.get('lat')
+    user_lon = request.GET.get('lon')
+    
+    if not user_lat or not user_lon:
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': 'Location access required. Please enable location services and try again.',
+            'retry': True
+        })
+    
+    # Get active school location
+    school_location = SchoolLocation.objects.filter(is_active=True).first()
+    if not school_location:
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': 'School location not configured. Please contact administration.',
+            'retry': False
+        })
+    
+    # Check if user is within allowed radius
+    if not school_location.is_within_radius(user_lat, user_lon):
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': f'You are outside the school attendance radius ({school_location.allowed_radius}m). Please move closer to the school and try again.',
+            'retry': True
+        })
+
     att, created = Attendance.objects.get_or_create(
         teacher=profile, date=today,
         defaults={'school_qr': qr_obj, 'check_in_time': now, 'school_status': 'present'}
@@ -620,6 +648,34 @@ def scan_lesson_qr(request, qr_uuid):
         profile = request.user.teacher_profile
     except TeacherProfile.DoesNotExist:
         return render(request, 'qr/scan_result.html', {'success': False, 'message': 'Teacher profile not found.'})
+
+    # Location validation
+    user_lat = request.GET.get('lat')
+    user_lon = request.GET.get('lon')
+    
+    if not user_lat or not user_lon:
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': 'Location access required. Please enable location services and try again.',
+            'retry': True
+        })
+    
+    # Get active school location
+    school_location = SchoolLocation.objects.filter(is_active=True).first()
+    if not school_location:
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': 'School location not configured. Please contact administration.',
+            'retry': False
+        })
+    
+    # Check if user is within allowed radius
+    if not school_location.is_within_radius(user_lat, user_lon):
+        return render(request, 'qr/scan_result.html', {
+            'success': False, 
+            'message': f'You are outside the school attendance radius ({school_location.allowed_radius}m). Please move closer to the school and try again.',
+            'retry': True
+        })
 
     att, created = Attendance.objects.get_or_create(
         teacher=profile, date=today,
@@ -694,6 +750,61 @@ def admin_qr_view(request):
     school_qrs = QRCode.objects.filter(qr_type='school_attendance').order_by('-created_at')
     lesson_qrs = QRCode.objects.filter(qr_type='lesson').order_by('-created_at')
     return render(request, 'admin/qr_view.html', {'school_qrs': school_qrs, 'lesson_qrs': lesson_qrs})
+
+
+# ── School Location Management ─────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin)
+def school_location_list(request):
+    locations = SchoolLocation.objects.all().order_by('-created_at')
+    return render(request, 'admin/school_location_list.html', {'locations': locations})
+
+
+@login_required
+@user_passes_test(is_admin)
+def school_location_create(request):
+    if request.method == 'POST':
+        form = SchoolLocationForm(request.POST)
+        if form.is_valid():
+            # Deactivate all other locations if this one is set to active
+            if form.cleaned_data.get('is_active'):
+                SchoolLocation.objects.update(is_active=False)
+            form.save()
+            messages.success(request, 'School location created successfully.')
+            return redirect('school_location_list')
+    else:
+        form = SchoolLocationForm()
+    return render(request, 'admin/school_location_form.html', {'form': form, 'title': 'Add School Location'})
+
+
+@login_required
+@user_passes_test(is_admin)
+def school_location_update(request, location_id):
+    location = get_object_or_404(SchoolLocation, id=location_id)
+    if request.method == 'POST':
+        form = SchoolLocationForm(request.POST, instance=location)
+        if form.is_valid():
+            # Deactivate all other locations if this one is set to active
+            if form.cleaned_data.get('is_active'):
+                SchoolLocation.objects.exclude(id=location_id).update(is_active=False)
+            form.save()
+            messages.success(request, 'School location updated successfully.')
+            return redirect('school_location_list')
+    else:
+        form = SchoolLocationForm(instance=location)
+    return render(request, 'admin/school_location_form.html', {'form': form, 'title': 'Edit School Location', 'location': location})
+
+
+@login_required
+@user_passes_test(is_admin)
+def school_location_delete(request, location_id):
+    location = get_object_or_404(SchoolLocation, id=location_id)
+    if request.method == 'POST':
+        location.delete()
+        messages.success(request, 'School location deleted successfully.')
+        return redirect('school_location_list')
+    return render(request, 'admin/school_location_confirm_delete.html', {'location': location})
 
 
 @login_required

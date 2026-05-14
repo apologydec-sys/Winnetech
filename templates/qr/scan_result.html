@@ -79,6 +79,11 @@
       </div>
       <h4 style="font-weight:800;color:#dc3545">Scan Failed</h4>
       <p style="color:#888;font-size:0.9rem">{{ message }}</p>
+      {% if retry %}
+      <a href="{% url 'qr_scanner' %}" class="btn-gold" style="background: linear-gradient(135deg, #003087, #0047b3); margin-right: 0.5rem;">
+        <i class="fas fa-redo me-2"></i> Retry Scan
+      </a>
+      {% endif %}
     {% endif %}
 
     <a href="{% if request.user.is_authenticated %}{% if request.user.is_staff %}{% url 'admin_dashboard' %}{% else %}{% url 'teacher_dashboard' %}{% endif %}{% else %}{% url 'teacher_login' %}{% endif %}" class="btn-gold">

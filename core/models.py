@@ -311,3 +311,43 @@ class ClassSchedule(models.Model):
 
     def __str__(self):
         return f"{self.teacher.full_name} — {self.timetable_entry.subject} on {self.scheduled_date}"
+
+
+# ─── School Location Settings ─────────────────────────────────────────────────
+
+class SchoolLocation(models.Model):
+    """Stores school location and allowed radius for QR code scanning."""
+    name = models.CharField(max_length=200, default='Main Campus')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, help_text='School latitude coordinate')
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, help_text='School longitude coordinate')
+    allowed_radius = models.PositiveIntegerField(default=100, help_text='Allowed radius in meters')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'School Location'
+        verbose_name_plural = 'School Locations'
+
+    def __str__(self):
+        return f"{self.name} (Radius: {self.allowed_radius}m)"
+
+    def is_within_radius(self, user_lat, user_lon):
+        """Check if user coordinates are within allowed radius using Haversine formula."""
+        from math import radians, cos, sin, sqrt, asin
+
+        # Convert decimal degrees to radians
+        lat1, lon1 = radians(float(self.latitude)), radians(float(self.longitude))
+        lat2, lon2 = radians(float(user_lat)), radians(float(user_lon))
+
+        # Haversine formula
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        
+        # Radius of Earth in meters
+        r = 6371000
+        distance = c * r
+
+        return distance <= self.allowed_radius
