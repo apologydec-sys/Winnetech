@@ -238,9 +238,6 @@ def teacher_dashboard(request):
         messages.error(request, 'Teacher profile not found.')
         return redirect('welcome')
 
-    # Redirect to complete profile if not done yet
-    if not profile.profile_complete:
-        return redirect('teacher_complete_profile')
 
     today = timezone.localdate()
     today_att = Attendance.objects.filter(teacher=profile, date=today).first()
@@ -278,116 +275,6 @@ def mark_notification_read(request, notif_id):
 
 
 # ── Teacher Profile Complete / Update / Change Password ───────────────────────
-
-@login_required
-def teacher_complete_profile(request):
-    """First-login profile completion for teachers."""
-    if request.user.is_staff:
-        return redirect('admin_dashboard')
-    try:
-        profile = request.user.teacher_profile
-    except TeacherProfile.DoesNotExist:
-        return redirect('welcome')
-
-    if profile.profile_complete:
-        return redirect('teacher_dashboard')
-
-    from .models import DEPARTMENT_CHOICES, COURSE_TYPE_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS, DEPARTMENT_SUBJECTS
-    errors = {}
-    if request.method == 'POST':
-        # Collect all fields
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        gender = request.POST.get('gender', '').strip()
-        dob_raw = request.POST.get('date_of_birth', '').strip()
-        address = request.POST.get('address', '').strip()
-        qualification = request.POST.get('qualification', '').strip()
-        specialization = request.POST.get('specialization', '').strip()
-        course_type = request.POST.get('course_type', '').strip()
-        preferred_subject = request.POST.get('preferred_subject', '').strip()[:100]
-        department = request.POST.get('department', '').strip()[:100]
-        previous_school = request.POST.get('previous_school', '').strip()
-        emergency_contact = request.POST.get('emergency_contact', '').strip()
-        emergency_phone = request.POST.get('emergency_phone', '').strip()
-        email = request.POST.get('email', '').strip()
-
-        # Validate required
-        if not first_name: errors['first_name'] = 'First name is required.'
-        if not last_name: errors['last_name'] = 'Last name is required.'
-        if not phone: errors['phone'] = 'Phone number is required.'
-        if not gender: errors['gender'] = 'Please select your gender.'
-        if not qualification: errors['qualification'] = 'Please select your qualification.'
-        if not course_type: errors['course_type'] = 'Please select a course type.'
-        if not preferred_subject: errors['preferred_subject'] = 'Please select your subject.'
-        if course_type == 'departmental' and not department:
-            errors['department'] = 'Please select your department.'
-
-        _validate_teacher_profile_lengths({
-            'first_name': first_name, 'last_name': last_name, 'phone': phone,
-            'emergency_phone': emergency_phone, 'emergency_contact': emergency_contact,
-            'specialization': specialization, 'previous_school': previous_school,
-        }, errors)
-        _validate_teacher_uploads(request.FILES, errors)
-        date_of_birth = _parse_dob_or_error(dob_raw, errors)
-
-        if not errors:
-            user = request.user
-            user.first_name = first_name[:150]
-            user.last_name = last_name[:150]
-            if email:
-                user.email = email[:254]
-            profile.phone = phone[:20]
-            profile.gender = gender
-            profile.date_of_birth = date_of_birth
-            profile.address = address
-            profile.qualification = qualification
-            profile.specialization = specialization[:200]
-            profile.course_type = course_type
-            profile.preferred_subject = preferred_subject
-            profile.department = department if course_type == 'departmental' else ''
-            profile.previous_school = previous_school[:200]
-            profile.emergency_contact = emergency_contact[:100]
-            profile.emergency_phone = emergency_phone[:20]
-            profile.profile_complete = True
-            if request.FILES.get('profile_photo'):
-                profile.profile_photo = request.FILES['profile_photo']
-            if request.FILES.get('cv_document'):
-                profile.cv_document = request.FILES['cv_document']
-            if request.FILES.get('certificate_document'):
-                profile.certificate_document = request.FILES['certificate_document']
-            if request.FILES.get('id_document'):
-                profile.id_document = request.FILES['id_document']
-            try:
-                with transaction.atomic():
-                    user.save()
-                    profile.save()
-            except Exception:
-                logger.exception('teacher_complete_profile save failed')
-                errors['save'] = (
-                    'We could not save your profile. If you uploaded files, try smaller images '
-                    '(under 10 MB each) or skip documents for now.'
-                )
-                profile.refresh_from_db()
-                user.refresh_from_db()
-
-        if not errors:
-            messages.success(request, f'Welcome {first_name}! Your profile is complete.')
-            return redirect('teacher_dashboard')
-
-    dob_input_value = _dob_input_value(request.POST, profile)
-    return render(request, 'teacher/complete_profile.html', {
-        'profile': profile,
-        'errors': errors,
-        'post': request.POST,
-        'dob_input_value': dob_input_value,
-        'dept_choices': DEPARTMENT_CHOICES,
-        'course_types': COURSE_TYPE_CHOICES,
-        'genders': GENDER_CHOICES,
-        'qualifications': QUALIFICATION_CHOICES,
-        'elective_subjects': ELECTIVE_SUBJECTS,
-        'dept_subjects': DEPARTMENT_SUBJECTS,
-    })
 
 
 @login_required
@@ -1039,14 +926,30 @@ def admin_notifications(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_create_teacher(request):
-    """Admin creates teacher with ONLY Staff ID + Password. Teacher fills rest on first login."""
+    """Admin creates teacher with full profile. Teacher skips complete_profile and goes straight to dashboard."""
+    from .models import DEPARTMENT_CHOICES, GENDER_CHOICES, QUALIFICATION_CHOICES, ELECTIVE_SUBJECTS
     error = None
     success = None
+    post_data = {}
     if request.method == 'POST':
         staff_id = request.POST.get('staff_id', '').strip().upper()
         password = request.POST.get('password', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
+        
+        phone = request.POST.get('phone', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        qualification = request.POST.get('qualification', '').strip()
+        course_type = request.POST.get('course_type', '').strip()
+        preferred_subject = request.POST.get('preferred_subject', '').strip()[:100]
+        department = request.POST.get('department', '').strip()[:100]
+        emergency_contact = request.POST.get('emergency_contact', '').strip()
+        emergency_phone = request.POST.get('emergency_phone', '').strip()
+        
+        post_data = request.POST
+        profile_photo = request.FILES.get('profile_photo')
+        certificate_document = request.FILES.get('certificate_document')
+
         if not staff_id:
             error = 'Staff ID is required.'
         elif not password:
@@ -1055,6 +958,20 @@ def admin_create_teacher(request):
             error = 'Staff ID must be at least 3 characters.'
         elif len(password) < 4:
             error = 'Password must be at least 4 characters.'
+        elif not first_name or not last_name:
+            error = 'First and Last name are required.'
+        elif not phone:
+            error = 'Phone number is required.'
+        elif not gender:
+            error = 'Please select a gender.'
+        elif not qualification:
+            error = 'Please select a qualification.'
+        elif not course_type:
+            error = 'Please select a course type.'
+        elif not preferred_subject:
+            error = 'Please select a preferred subject.'
+        elif course_type == 'departmental' and not department:
+            error = 'Please select a department.'
         elif User.objects.filter(username=staff_id).exists():
             error = f'Staff ID "{staff_id}" already exists.'
         elif TeacherProfile.objects.filter(staff_id=staff_id).exists():
@@ -1068,15 +985,27 @@ def admin_create_teacher(request):
                 )
                 TeacherProfile.objects.create(
                     user=new_user, staff_id=staff_id,
-                    phone='', gender='male', address='',
-                    qualification='other', specialization='',
-                    course_type='core', preferred_subject='',
-                    is_approved=True, profile_complete=False,
+                    phone=phone[:20], gender=gender, address='',
+                    qualification=qualification, specialization='',
+                    course_type=course_type, preferred_subject=preferred_subject,
+                    department=department if course_type == 'departmental' else '',
+                    emergency_contact=emergency_contact[:100],
+                    emergency_phone=emergency_phone[:20],
+                    profile_photo=profile_photo,
+                    certificate_document=certificate_document,
+                    is_approved=True, profile_complete=True,
                 )
-                success = f'✅ Account created! Staff ID: {staff_id} | Password: {password} — Teacher must complete profile on first login.'
+                success = f'✅ Account created! Staff ID: {staff_id} | Password: {password} — Profile is fully complete.'
             except Exception as e:
                 error = f'Error: {str(e)}'
-    return render(request, 'admin/create_teacher.html', {'error': error, 'success': success})
+    context = {
+        'error': error, 'success': success, 'post': post_data,
+        'genders': GENDER_CHOICES,
+        'qualifications': QUALIFICATION_CHOICES,
+        'elective_subjects': ELECTIVE_SUBJECTS,
+        'dept_choices': DEPARTMENT_CHOICES,
+    }
+    return render(request, 'admin/create_teacher.html', context)
 
 
 @login_required

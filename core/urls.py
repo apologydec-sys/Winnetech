@@ -12,7 +12,7 @@ urlpatterns = [
     path('superadmin-portal/', views.superadmin_login, name='superadmin_login'),
     path('logout/', views.logout_view, name='logout'),
     path('teacher/dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
-    path('teacher/complete-profile/', views.teacher_complete_profile, name='teacher_complete_profile'),
+
     path('teacher/update-profile/', views.teacher_update_profile, name='teacher_update_profile'),
     path('teacher/change-password/', views.teacher_change_password, name='teacher_change_password'),
     path('teacher/notification/<int:notif_id>/read/', views.mark_notification_read, name='mark_notification_read'),
