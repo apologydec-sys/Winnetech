@@ -49,13 +49,6 @@ class TeacherRegistrationForm(UserCreationForm):
     qualification = forms.ChoiceField(
         choices=[('', '-- Select Qualification --')] + list(QUALIFICATION_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select'}))
-    years_of_experience = forms.IntegerField(
-        min_value=0, initial=0,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}))
-    bio = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief Bio'}))
-
     # ── Course Preference ─────────────────────────────────────
     course_type = forms.ChoiceField(
         choices=[('', '-- Select Course Type --')] + list(COURSE_TYPE_CHOICES),
@@ -155,8 +148,8 @@ class TeacherRegistrationForm(UserCreationForm):
                 address='',
                 qualification=self.cleaned_data.get('qualification', ''),
                 specialization='',
-                years_of_experience=self.cleaned_data.get('years_of_experience', 0),
-                bio=self.cleaned_data.get('bio', '').strip(),
+                years_of_experience=0,
+                bio='',
                 course_type=self.cleaned_data.get('course_type', ''),
                 preferred_subject=self.cleaned_data.get('preferred_subject', '').strip(),
                 department=self.cleaned_data.get('department', '').strip(),

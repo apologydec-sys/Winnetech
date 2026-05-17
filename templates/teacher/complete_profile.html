@@ -72,15 +72,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
           </select>
           {% if errors.qualification %}<div class="invalid-feedback">{{ errors.qualification }}</div>{% endif %}
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Years of Experience</label>
-          <input type="number" name="years_of_experience" class="form-control" min="0" value="{{ post.years_of_experience|default:profile.years_of_experience }}">
-        </div>
 
-        <div class="col-12">
-          <label class="form-label">Professional Bio</label>
-          <textarea name="bio" class="form-control" rows="2">{{ post.bio|default:profile.bio }}</textarea>
-        </div>
       </div>
 
       <!-- Course Type & Subject -->

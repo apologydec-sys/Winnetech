@@ -304,12 +304,10 @@ def teacher_complete_profile(request):
         address = request.POST.get('address', '').strip()
         qualification = request.POST.get('qualification', '').strip()
         specialization = request.POST.get('specialization', '').strip()
-        years_exp = request.POST.get('years_of_experience', '0').strip()
         course_type = request.POST.get('course_type', '').strip()
         preferred_subject = request.POST.get('preferred_subject', '').strip()[:100]
         department = request.POST.get('department', '').strip()[:100]
         previous_school = request.POST.get('previous_school', '').strip()
-        bio = request.POST.get('bio', '').strip()
         emergency_contact = request.POST.get('emergency_contact', '').strip()
         emergency_phone = request.POST.get('emergency_phone', '').strip()
         email = request.POST.get('email', '').strip()
@@ -345,12 +343,10 @@ def teacher_complete_profile(request):
             profile.address = address
             profile.qualification = qualification
             profile.specialization = specialization[:200]
-            profile.years_of_experience = _safe_years_experience(years_exp)
             profile.course_type = course_type
             profile.preferred_subject = preferred_subject
             profile.department = department if course_type == 'departmental' else ''
             profile.previous_school = previous_school[:200]
-            profile.bio = bio
             profile.emergency_contact = emergency_contact[:100]
             profile.emergency_phone = emergency_phone[:20]
             profile.profile_complete = True

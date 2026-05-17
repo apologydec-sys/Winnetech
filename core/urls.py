@@ -7,7 +7,7 @@ urlpatterns = [
     path('offline/', views.offline_page, name='offline'),
     path('login/', views.unified_login, name='login'),
     path('login/', views.unified_login, name='teacher_login'),
-    path('register/', views.teacher_register, name='teacher_register'),
+
     path('admin-portal/', views.unified_login, name='admin_login'),
     path('superadmin-portal/', views.superadmin_login, name='superadmin_login'),
     path('logout/', views.logout_view, name='logout'),
