@@ -110,25 +110,9 @@ body{font-family:'Poppins',sans-serif;}
             <option value="other" {% if form.gender.value == 'other' %}selected{% endif %}>Other</option>
           </select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Date of Birth</label>
-          <input type="date" name="date_of_birth" class="form-control" value="{{ form.date_of_birth.value|default:'' }}">
-        </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <label class="form-label">Profile Photo</label>
           <input type="file" name="profile_photo" class="form-control" accept="image/*">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Residential Address *</label>
-          <textarea name="address" class="form-control" rows="2" placeholder="Your address" required>{{ form.address.value|default:'' }}</textarea>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Emergency Contact</label>
-          <input type="text" name="emergency_contact" class="form-control" placeholder="Name" value="{{ form.emergency_contact.value|default:'' }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Emergency Phone</label>
-          <input type="tel" name="emergency_phone" class="form-control" placeholder="Phone" value="{{ form.emergency_phone.value|default:'' }}">
         </div>
       </div>
     </div>
@@ -154,14 +138,7 @@ body{font-family:'Poppins',sans-serif;}
           <label class="form-label">Years of Experience *</label>
           <input type="number" name="years_of_experience" class="form-control" min="0" value="{{ form.years_of_experience.value|default:'0' }}">
         </div>
-        <div class="col-12">
-          <label class="form-label">Area of Specialization *</label>
-          <input type="text" name="specialization" class="form-control" placeholder="e.g. Electrical Engineering, Mathematics" required value="{{ form.specialization.value|default:'' }}">
-        </div>
-        <div class="col-12">
-          <label class="form-label">Previous School / Institution</label>
-          <input type="text" name="previous_school" class="form-control" placeholder="Previous institution (optional)" value="{{ form.previous_school.value|default:'' }}">
-        </div>
+
         <div class="col-12">
           <label class="form-label">Professional Bio</label>
           <textarea name="bio" class="form-control" rows="3" placeholder="Brief professional biography...">{{ form.bio.value|default:'' }}</textarea>
@@ -230,19 +207,9 @@ body{font-family:'Poppins',sans-serif;}
     <div class="fstep" id="st4">
       <div class="stitle"><i class="fas fa-file-upload"></i> Documents &amp; Account</div>
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">CV / Resume</label>
-          <input type="file" name="cv_document" class="form-control" accept=".pdf,.doc,.docx">
-          <small class="text-muted">PDF, DOC, DOCX</small>
-        </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <label class="form-label">Academic Certificate</label>
           <input type="file" name="certificate_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-          <small class="text-muted">PDF or image</small>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">National ID / Passport</label>
-          <input type="file" name="id_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
           <small class="text-muted">PDF or image</small>
         </div>
         <div class="col-12"><hr class="my-2"></div>
@@ -299,7 +266,7 @@ var labels=['Step 1 of 4 — Personal Information','Step 2 of 4 — Professional
 function validateStep(step){
   var errs=[];
   if(step===1){
-    var req=['first_name','last_name','username','email','phone','address'];
+    var req=['first_name','last_name','staff_id','email','phone'];
     req.forEach(function(n){
       var el=document.querySelector('[name="'+n+'"]');
       if(el&&!el.value.trim()){errs.push(el.closest('.col-12,.col-md-6').querySelector('.form-label').textContent.replace('*','').trim());}
@@ -309,7 +276,7 @@ function validateStep(step){
     if(gender&&!gender.value){errs.push('Gender');gender.style.borderColor='#dc3545';}else if(gender){gender.style.borderColor='';}
   }
   if(step===2){
-    var req2=['qualification','specialization','years_of_experience'];
+    var req2=['qualification','years_of_experience'];
     req2.forEach(function(n){
       var el=document.querySelector('[name="'+n+'"]');
       if(el&&!el.value.trim()){errs.push(n.replace(/_/g,' '));el.style.borderColor='#dc3545';}else if(el){el.style.borderColor='';}

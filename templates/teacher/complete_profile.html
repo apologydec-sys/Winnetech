@@ -61,16 +61,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
           </select>
           {% if errors.gender %}<div class="invalid-feedback">{{ errors.gender }}</div>{% endif %}
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Date of Birth</label>
-          <input type="date" name="date_of_birth" class="form-control {% if errors.date_of_birth %}is-invalid{% endif %}" value="{{ dob_input_value }}">
-          {% if errors.date_of_birth %}<div class="invalid-feedback d-block">{{ errors.date_of_birth }}</div>{% endif %}
-        </div>
-        <div class="col-12">
-          <label class="form-label">Residential Address *</label>
-          <textarea name="address" class="form-control {% if errors.address %}is-invalid{% endif %}" rows="2" required>{{ post.address|default:profile.address }}</textarea>
-          {% if errors.address %}<div class="invalid-feedback">{{ errors.address }}</div>{% endif %}
-        </div>
+
         <div class="col-md-6">
           <label class="form-label">Qualification *</label>
           <select name="qualification" class="form-select {% if errors.qualification %}is-invalid{% endif %}" required>
@@ -85,26 +76,10 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
           <label class="form-label">Years of Experience</label>
           <input type="number" name="years_of_experience" class="form-control" min="0" value="{{ post.years_of_experience|default:profile.years_of_experience }}">
         </div>
-        <div class="col-12">
-          <label class="form-label">Specialization *</label>
-          <input type="text" name="specialization" class="form-control {% if errors.specialization %}is-invalid{% endif %}" value="{{ post.specialization|default:profile.specialization }}" required>
-          {% if errors.specialization %}<div class="invalid-feedback">{{ errors.specialization }}</div>{% endif %}
-        </div>
-        <div class="col-12">
-          <label class="form-label">Previous School</label>
-          <input type="text" name="previous_school" class="form-control" value="{{ post.previous_school|default:profile.previous_school }}">
-        </div>
+
         <div class="col-12">
           <label class="form-label">Professional Bio</label>
           <textarea name="bio" class="form-control" rows="2">{{ post.bio|default:profile.bio }}</textarea>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Emergency Contact</label>
-          <input type="text" name="emergency_contact" class="form-control" value="{{ post.emergency_contact|default:profile.emergency_contact }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Emergency Phone</label>
-          <input type="tel" name="emergency_phone" class="form-control" value="{{ post.emergency_phone|default:profile.emergency_phone }}">
         </div>
       </div>
 
@@ -164,20 +139,11 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#001f5c,
           {% if errors.profile_photo %}<div class="invalid-feedback d-block">{{ errors.profile_photo }}</div>{% endif %}
           {% if profile.profile_photo %}<small class="text-muted">Current: {{ profile.profile_photo.name|truncatechars:30 }}</small>{% endif %}
         </div>
-        <div class="col-md-6">
-          <label class="form-label">CV / Resume</label>
-          <input type="file" name="cv_document" class="form-control {% if errors.cv_document %}is-invalid{% endif %}" accept=".pdf,.doc,.docx">
-          {% if errors.cv_document %}<div class="invalid-feedback d-block">{{ errors.cv_document }}</div>{% endif %}
-        </div>
+
         <div class="col-md-6">
           <label class="form-label">Certificate</label>
           <input type="file" name="certificate_document" class="form-control {% if errors.certificate_document %}is-invalid{% endif %}" accept=".pdf,.jpg,.jpeg,.png">
           {% if errors.certificate_document %}<div class="invalid-feedback d-block">{{ errors.certificate_document }}</div>{% endif %}
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">National ID / Passport</label>
-          <input type="file" name="id_document" class="form-control {% if errors.id_document %}is-invalid{% endif %}" accept=".pdf,.jpg,.jpeg,.png">
-          {% if errors.id_document %}<div class="invalid-feedback d-block">{{ errors.id_document }}</div>{% endif %}
         </div>
       </div>
 

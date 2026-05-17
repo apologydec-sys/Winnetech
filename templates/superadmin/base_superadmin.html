@@ -58,6 +58,7 @@
       <a href="{% url 'admin_timetable' %}" class="sa-link {% block nav_timetable %}{% endblock %}"><i class="fas fa-calendar-alt"></i> Timetable</a>
       <a href="{% url 'admin_schedule' %}" class="sa-link {% block nav_schedule %}{% endblock %}"><i class="fas fa-calendar-plus"></i> Schedule Classes</a>
       <a href="{% url 'admin_notifications' %}" class="sa-link {% block nav_notif %}{% endblock %}"><i class="fas fa-bell"></i> Notifications</a>
+      <a href="{% url 'school_location_list' %}" class="sa-link {% block nav_locations %}{% endblock %}"><i class="fas fa-map-marker-alt"></i> Locations</a>
       <div class="sa-sec">QR Codes</div>
       <a href="{% url 'generate_qr' %}" class="sa-link {% block nav_qr %}{% endblock %}"><i class="fas fa-qrcode"></i> Generate QR</a>
       <a href="{% url 'qr_scanner' %}" class="sa-link"><i class="fas fa-camera"></i> QR Scanner</a>

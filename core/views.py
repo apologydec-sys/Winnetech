@@ -319,9 +319,7 @@ def teacher_complete_profile(request):
         if not last_name: errors['last_name'] = 'Last name is required.'
         if not phone: errors['phone'] = 'Phone number is required.'
         if not gender: errors['gender'] = 'Please select your gender.'
-        if not address: errors['address'] = 'Address is required.'
         if not qualification: errors['qualification'] = 'Please select your qualification.'
-        if not specialization: errors['specialization'] = 'Specialization is required.'
         if not course_type: errors['course_type'] = 'Please select a course type.'
         if not preferred_subject: errors['preferred_subject'] = 'Please select your subject.'
         if course_type == 'departmental' and not department:
@@ -755,14 +753,14 @@ def admin_qr_view(request):
 # ── School Location Management ─────────────────────────────────────────────────
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_superadmin)
 def school_location_list(request):
     locations = SchoolLocation.objects.all().order_by('-created_at')
     return render(request, 'admin/school_location_list.html', {'locations': locations})
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_superadmin)
 def school_location_create(request):
     if request.method == 'POST':
         form = SchoolLocationForm(request.POST)
@@ -779,7 +777,7 @@ def school_location_create(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_superadmin)
 def school_location_update(request, location_id):
     location = get_object_or_404(SchoolLocation, id=location_id)
     if request.method == 'POST':
@@ -797,7 +795,7 @@ def school_location_update(request, location_id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_superadmin)
 def school_location_delete(request, location_id):
     location = get_object_or_404(SchoolLocation, id=location_id)
     if request.method == 'POST':

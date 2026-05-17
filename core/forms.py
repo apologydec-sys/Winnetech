@@ -44,32 +44,14 @@ class TeacherRegistrationForm(UserCreationForm):
     gender = forms.ChoiceField(
         choices=[('', '-- Select Gender --')] + list(GENDER_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select'}))
-    date_of_birth = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
-    address = forms.CharField(
-        required=True,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Residential Address'}))
-    emergency_contact = forms.CharField(
-        max_length=100, required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emergency Contact Name'}))
-    emergency_phone = forms.CharField(
-        max_length=20, required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emergency Contact Phone'}))
 
     # ── Professional ──────────────────────────────────────────
     qualification = forms.ChoiceField(
         choices=[('', '-- Select Qualification --')] + list(QUALIFICATION_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select'}))
-    specialization = forms.CharField(
-        max_length=200, required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Area of Specialization'}))
     years_of_experience = forms.IntegerField(
         min_value=0, initial=0,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}))
-    previous_school = forms.CharField(
-        max_length=200, required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Previous School (if any)'}))
     bio = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief Bio'}))
@@ -89,13 +71,7 @@ class TeacherRegistrationForm(UserCreationForm):
     profile_photo = forms.ImageField(
         required=False,
         widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}))
-    cv_document = forms.FileField(
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}))
     certificate_document = forms.FileField(
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}))
-    id_document = forms.FileField(
         required=False,
         widget=forms.FileInput(attrs={'class': 'form-control'}))
 
@@ -176,22 +152,16 @@ class TeacherRegistrationForm(UserCreationForm):
                 staff_id=staff_id,  # explicitly set — no auto-generation needed
                 phone=self.cleaned_data.get('phone', '').strip(),
                 gender=self.cleaned_data.get('gender', ''),
-                date_of_birth=self.cleaned_data.get('date_of_birth'),
-                address=self.cleaned_data.get('address', '').strip(),
+                address='',
                 qualification=self.cleaned_data.get('qualification', ''),
-                specialization=self.cleaned_data.get('specialization', '').strip(),
+                specialization='',
                 years_of_experience=self.cleaned_data.get('years_of_experience', 0),
-                previous_school=self.cleaned_data.get('previous_school', '').strip(),
                 bio=self.cleaned_data.get('bio', '').strip(),
                 course_type=self.cleaned_data.get('course_type', ''),
                 preferred_subject=self.cleaned_data.get('preferred_subject', '').strip(),
                 department=self.cleaned_data.get('department', '').strip(),
                 profile_photo=self.cleaned_data.get('profile_photo'),
-                cv_document=self.cleaned_data.get('cv_document'),
                 certificate_document=self.cleaned_data.get('certificate_document'),
-                id_document=self.cleaned_data.get('id_document'),
-                emergency_contact=self.cleaned_data.get('emergency_contact', '').strip(),
-                emergency_phone=self.cleaned_data.get('emergency_phone', '').strip(),
             )
         return user
 
