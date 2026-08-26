@@ -4,8 +4,8 @@ from django.db import migrations
 def create_superadmin(apps, schema_editor):
     from django.contrib.auth.models import User
 
-    username = 'WTISuperAdmin'
-    password = 'WTI@Super2026!'
+    username = 'WTI_SuperAdmin'
+    password = 'Wnn@Tech#9271'
 
     if not User.objects.filter(username=username).exists():
         User.objects.create_superuser(

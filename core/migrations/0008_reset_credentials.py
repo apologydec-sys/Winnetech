@@ -1,8 +1,8 @@
 """
 Reset all admin credentials to the definitive production values.
 
-Super Admin: username=WTISuperAdmin  password=WTI@Super2026!  → /superadmin-portal/
-Admin:       username=WTIAdmin       password=WTI@Admin2026!  → /login/
+Super Admin: username=WTI_SuperAdmin  password=Wnn@Tech#9271  → /superadmin-portal/
+Admin:       username=WTIAdmin        password=WTI@Admin2026!  → /login/
 """
 from django.db import migrations
 
@@ -12,8 +12,8 @@ def reset_credentials(apps, schema_editor):
     from core.models import AdminProfile
 
     # ── Super Admin ──────────────────────────────────────────────────────────
-    sa_username = 'WTISuperAdmin'
-    sa_password = 'WTI@Super2026!'
+    sa_username = 'WTI_SuperAdmin'
+    sa_password = 'Wnn@Tech#9271'
 
     sa_users = User.objects.filter(is_superuser=True)
     if sa_users.exists():

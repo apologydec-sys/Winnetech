@@ -16,8 +16,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 
-SUPERADMIN_USERNAME = 'WTISuperAdmin'
-SUPERADMIN_PASSWORD = 'WTI@Super2026!'
+SUPERADMIN_USERNAME = 'WTI_SuperAdmin'
+SUPERADMIN_PASSWORD = 'Wnn@Tech#9271'
 
 ADMIN_USERNAME = 'WTIAdmin'
 ADMIN_PASSWORD = 'WTI@Admin2026!'
