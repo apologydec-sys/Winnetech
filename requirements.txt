@@ -1,11 +1,13 @@
 Django==5.0.14
+gunicorn
 daphne
 channels
+whitenoise
 dj-database-url
 psycopg2-binary
-whitenoise
 django-crispy-forms
 crispy-bootstrap5
 django-widget-tweaks
+qrcode[pil]
 cloudinary
 django-cloudinary-storage
