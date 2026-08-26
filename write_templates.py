@@ -1,0 +1,147 @@
+import os
+
+# ── Superadmin Login ──────────────────────────────────────────────────────────
+os.makedirs('templates/auth', exist_ok=True)
+os.makedirs('templates/superadmin', exist_ok=True)
+os.makedirs('templates/admin', exist_ok=True)
+os.makedirs('templates/teacher', exist_ok=True)
+os.makedirs('templates/qr', exist_ok=True)
+
+# Superadmin login page
+with open('templates/auth/superadmin_login.html', 'w', encoding='utf-8') as f:
+    f.write("""{% extends 'base.html' %}
+{% load static %}
+{% block title %}Super Admin — WTI{% endblock %}
+{% block body %}
+<div style="min-height:100vh;background:linear-gradient(135deg,#001f5c,#003087);display:flex;align-items:center;justify-content:center;padding:2rem 1rem;">
+  <div style="background:#fff;border-radius:20px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <img src="{% static 'images/ChatGPT Image Apr 28, 2026, 10_01_09 AM.png' %}" style="width:65px;height:65px;border-radius:50%;border:3px solid #003087;object-fit:cover">
+      <h4 style="font-weight:800;color:#003087;margin:.5rem 0 0;font-size:1.2rem">Super Admin Portal</h4>
+      <p style="color:#888;font-size:.8rem;margin:0">Winneba Technical Institute — Technical Access</p>
+    </div>
+    {% if error %}
+    <div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label" style="font-size:.8rem;font-weight:600;color:#555"><i class="fas fa-crown me-1" style="color:#003087"></i> Super Admin Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus autocomplete="username">
+      </div>
+      <div class="mb-4">
+        <label class="form-label" style="font-size:.8rem;font-weight:600;color:#555"><i class="fas fa-lock me-1" style="color:#003087"></i> Password</label>
+        <div class="position-relative">
+          <input type="password" name="password" id="sp" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+          <button type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 border-0 bg-transparent text-muted" onclick="var e=document.getElementById('sp');e.type=e.type=='password'?'text':'password'"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" style="background:linear-gradient(135deg,#003087,#0047b3);color:#fff;border:none;border-radius:10px;padding:.7rem 1.5rem;font-weight:700;font-size:.9rem;width:100%;cursor:pointer">
+        <i class="fas fa-sign-in-alt me-2"></i> Access Super Admin
+      </button>
+    </form>
+    <div style="text-align:center;margin-top:1.2rem">
+      <a href="{% url 'welcome' %}" style="font-size:.8rem;color:#888;text-decoration:none"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+""")
+
+# ── Superadmin base ───────────────────────────────────────────────────────────
+with open('templates/superadmin/base_superadmin.html', 'w', encoding='utf-8') as f:
+    f.write("""{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>{% block title %}Super Admin — WTI{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <style>
+    .sa-sidebar{width:240px;background:linear-gradient(180deg,#001f5c,#003087);position:fixed;top:0;left:0;bottom:0;z-index:1000;display:flex;flex-direction:column;overflow-y:auto;}
+    .sa-brand{padding:1.5rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:.8rem;}
+    .sa-brand img{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.5);object-fit:cover;}
+    .sa-brand-text h6{color:#fff;font-weight:700;font-size:.82rem;margin:0;}
+    .sa-brand-text small{color:rgba(255,255,255,.5);font-size:.68rem;}
+    .sa-nav{flex:1;padding:.8rem 0;}
+    .sa-sec{color:rgba(255,255,255,.35);font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.7rem 1.2rem .2rem;}
+    .sa-link{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.2rem;color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem;font-weight:500;transition:all .2s;border-left:3px solid transparent;}
+    .sa-link:hover,.sa-link.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#f5a623;}
+    .sa-link i{width:18px;text-align:center;}
+    .sa-footer{padding:1rem 1.2rem;border-top:1px solid rgba(255,255,255,.1);}
+    .sa-main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column;}
+    .sa-header{height:60px;background:#fff;border-bottom:1px solid #e8ecf0;display:flex;align-items:center;padding:0 1.5rem;position:sticky;top:0;z-index:900;gap:1rem;}
+    .sa-header-title{font-size:1rem;font-weight:700;color:#001f5c;flex:1;}
+    .sa-content{padding:1.5rem;flex:1;}
+    .sa-card{background:#fff;border-radius:14px;box-shadow:0 2px 15px rgba(0,0,0,.06);border:1px solid #f0f2f5;overflow:hidden;}
+    .sa-card-header{padding:1rem 1.4rem;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;justify-content:space-between;}
+    .sa-card-header h5{font-size:.95rem;font-weight:700;color:#001f5c;margin:0;display:flex;align-items:center;gap:.4rem;}
+    .sa-card-header h5 i{color:#003087;}
+    .sa-stat{background:#fff;border-radius:14px;padding:1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 2px 15px rgba(0,0,0,.06);border:1px solid #f0f2f5;}
+    .sa-stat-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+    .sa-stat-icon.blue{background:rgba(0,48,135,.1);color:#003087;}
+    .sa-stat-icon.green{background:rgba(40,167,69,.1);color:#28a745;}
+    .sa-stat-icon.orange{background:rgba(245,166,35,.1);color:#f5a623;}
+    .sa-stat-icon.red{background:rgba(220,53,69,.1);color:#dc3545;}
+    .sa-stat h3{font-size:1.6rem;font-weight:800;color:#001f5c;margin:0;line-height:1;}
+    .sa-stat p{font-size:.75rem;color:#888;margin:.2rem 0 0;}
+    @media(max-width:992px){.sa-sidebar{transform:translateX(-100%)}.sa-main{margin-left:0}}
+  </style>
+</head>
+<body style="font-family:'Poppins',sans-serif;background:#f0f2f5;">
+<div style="display:flex;min-height:100vh;">
+  <aside class="sa-sidebar">
+    <div class="sa-brand">
+      <img src="{% static 'images/ChatGPT Image Apr 28, 2026, 10_01_09 AM.png' %}" alt="WTI">
+      <div class="sa-brand-text"><h6>Super Admin</h6><small>Technical Control</small></div>
+    </div>
+    <nav class="sa-nav">
+      <div class="sa-sec">Overview</div>
+      <a href="{% url 'superadmin_dashboard' %}" class="sa-link {% block nav_dash %}{% endblock %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <div class="sa-sec">Management</div>
+      <a href="{% url 'superadmin_admins' %}" class="sa-link {% block nav_admins %}{% endblock %}"><i class="fas fa-user-shield"></i> Manage Admins</a>
+      <a href="{% url 'superadmin_create_admin' %}" class="sa-link {% block nav_create %}{% endblock %}"><i class="fas fa-user-plus"></i> Create Admin</a>
+      <a href="{% url 'superadmin_teachers' %}" class="sa-link {% block nav_teachers %}{% endblock %}"><i class="fas fa-chalkboard-teacher"></i> All Teachers</a>
+      <div class="sa-sec">QR Codes</div>
+      <a href="{% url 'generate_qr' %}" class="sa-link {% block nav_qr %}{% endblock %}"><i class="fas fa-qrcode"></i> Generate QR</a>
+    </nav>
+    <div class="sa-footer">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;">
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f5a623,#e8920a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;flex-shrink:0;">
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        </div>
+        <div><div style="color:#fff;font-size:.78rem;font-weight:600;">{{ request.user.username }}</div><div style="color:rgba(255,255,255,.4);font-size:.68rem;">Super Admin</div></div>
+      </div>
+      <a href="{% url 'logout' %}" class="sa-link" style="border-radius:8px;color:rgba(255,100,100,.8)"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </aside>
+  <div class="sa-main">
+    <header class="sa-header">
+      <div class="sa-header-title"><i class="fas fa-crown me-2" style="color:#003087"></i>{% block page_title %}Dashboard{% endblock %}</div>
+      <div id="saLiveClock" style="font-size:.85rem;font-weight:600;color:#003087;background:#e8f0fe;padding:.3rem .8rem;border-radius:20px;"></div>
+    </header>
+    {% if messages %}
+    <div class="px-3 pt-3">
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show auto-dismiss" style="font-size:.83rem;border-radius:10px">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="sa-content">{% block content %}{% endblock %}</div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function updateClock(){var e=document.getElementById('saLiveClock');if(e){var n=new Date();e.textContent=n.toLocaleTimeString('en-GH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}}
+updateClock();setInterval(updateClock,1000);
+document.querySelectorAll('.alert.auto-dismiss').forEach(function(a){setTimeout(function(){a.style.opacity='0';setTimeout(function(){a.remove()},500)},4000)});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
+""")
+
+print('Superadmin base + login written')

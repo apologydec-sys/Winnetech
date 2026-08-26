@@ -1,0 +1,95 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Schedule Classes — WTI Admin{% endblock %}
+{% block page_title %}Schedule Classes{% endblock %}
+{% block nav_schedule %}active{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <!-- Schedule Form -->
+  <div class="col-lg-4">
+    <div class="wti-card">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-calendar-plus"></i> Schedule a Class</h5>
+      </div>
+      <div class="wti-card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Timetable Entry *</label>
+            {{ form.timetable_entry }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assign Teacher *</label>
+            {{ form.teacher }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date *</label>
+            {{ form.scheduled_date }}
+          </div>
+          <div class="alert alert-info" style="font-size:0.8rem;border-radius:10px">
+            <i class="fas fa-info-circle me-2"></i>
+            The teacher will receive a notification and a 10-minute reminder before class.
+          </div>
+          <button type="submit" class="btn-gold w-100 py-2 rounded-3">
+            <i class="fas fa-paper-plane me-2"></i> Schedule &amp; Notify Teacher
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scheduled Classes -->
+  <div class="col-lg-8">
+    <div class="wti-card">
+      <div class="wti-card-header">
+        <h5><i class="fas fa-list-alt"></i> Scheduled Classes</h5>
+      </div>
+      <div class="wti-card-body p-0">
+        <div class="table-responsive">
+          <table class="wti-table">
+            <thead>
+              <tr>
+                <th>Teacher</th>
+                <th>Subject</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in schedules %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="teacher-avatar" style="width:32px;height:32px;font-size:0.75rem">
+                      {{ s.teacher.user.first_name|first }}{{ s.teacher.user.last_name|first }}
+                    </div>
+                    <span style="font-size:0.85rem;font-weight:600">{{ s.teacher.full_name }}</span>
+                  </div>
+                </td>
+                <td style="font-size:0.85rem">{{ s.timetable_entry.subject }}</td>
+                <td style="font-size:0.82rem">{{ s.scheduled_date }}</td>
+                <td style="font-size:0.82rem;color:#888">
+                  {{ s.timetable_entry.start_time|time:"H:i" }} – {{ s.timetable_entry.end_time|time:"H:i" }}
+                </td>
+                <td>
+                  {% if s.is_completed %}
+                    <span class="status-badge approved"><i class="fas fa-check"></i> Done</span>
+                  {% else %}
+                    <span class="status-badge pending"><i class="fas fa-clock"></i> Pending</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No classes scheduled yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

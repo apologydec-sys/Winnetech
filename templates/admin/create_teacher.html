@@ -1,0 +1,213 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+{% block title %}Add Teacher — WTI{% endblock %}
+{% block page_title %}Add New Teacher{% endblock %}
+{% block nav_teachers %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-control, .form-select { border: 2px solid #e8ecf0; border-radius: 10px; padding: .55rem .9rem; font-size: .88rem; }
+.form-control:focus, .form-select:focus { border-color: #003087; box-shadow: 0 0 0 3px rgba(0,48,135,.12); outline: none; }
+.sc:hover, .sc.pk { border-color: #f5a623 !important; background: rgba(245,166,35,.08); }
+.sc.pk { font-weight: 600; }
+.tc:hover, .tc.pk { border-color: #003087 !important; background: rgba(0,48,135,.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-10">
+  <div class="wti-card">
+    <div class="wti-card-header" style="background:linear-gradient(135deg,#003087,#0047b3)">
+      <h5 style="color:#fff"><i class="fas fa-user-plus me-2"></i>Create & Complete Teacher Profile</h5>
+    </div>
+    <div class="wti-card-body">
+      {% if error %}<div class="alert alert-danger" style="font-size:.83rem;border-radius:10px"><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>{% endif %}
+      {% if success %}<div class="alert alert-success" style="font-size:.83rem;border-radius:10px">{{ success }}</div>{% endif %}
+      
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        
+        <h6 style="font-weight:700;color:#003087;margin-bottom:1rem"><i class="fas fa-user me-2"></i>Login Details</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Staff ID *</label>
+            <input type="text" name="staff_id" class="form-control" placeholder="e.g. WTI0001" style="text-transform:uppercase;font-weight:700;letter-spacing:1px;font-size:1rem" oninput="this.value=this.value.toUpperCase()" value="{{ post.staff_id }}" required autofocus>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Password *</label>
+            <input type="text" name="password" class="form-control" placeholder="Set a password" value="{{ post.password }}" required style="font-weight:600;letter-spacing:1px">
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 style="font-weight:700;color:#003087;margin-bottom:1rem"><i class="fas fa-id-card me-2"></i>Personal Information</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">First Name *</label>
+            <input type="text" name="first_name" class="form-control" value="{{ post.first_name }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Last Name *</label>
+            <input type="text" name="last_name" class="form-control" value="{{ post.last_name }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone *</label>
+            <input type="tel" name="phone" class="form-control" value="{{ post.phone }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Gender *</label>
+            <select name="gender" class="form-select" required>
+              <option value="">-- Select --</option>
+              {% for val,label in genders %}
+              <option value="{{ val }}" {% if post.gender == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Qualification *</label>
+            <select name="qualification" class="form-select" required>
+              <option value="">-- Select --</option>
+              {% for val,label in qualifications %}
+              <option value="{{ val }}" {% if post.qualification == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 style="font-weight:700;color:#003087;margin-bottom:1rem"><i class="fas fa-book-open me-2"></i>Course Preference</h6>
+        <input type="hidden" name="course_type" id="hct" value="{{ post.course_type }}">
+        <input type="hidden" name="preferred_subject" id="hs" value="{{ post.preferred_subject }}">
+        <input type="hidden" name="department" id="hd" value="{{ post.department }}">
+        
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="tc {% if post.course_type == 'core' %}pk{% endif %}" id="tc_el" onclick="pickType('core')" style="border:2px solid #e8ecf0;border-radius:12px;padding:1rem;cursor:pointer;text-align:center;transition:all .2s">
+              <i class="fas fa-book" style="font-size:1.5rem;display:block;margin-bottom:.3rem;color:#00d4ff"></i>
+              <div class="fw-bold" style="font-size:.88rem">Core Subjects</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="tc {% if post.course_type == 'departmental' %}pk{% endif %}" id="tc_dp" onclick="pickType('departmental')" style="border:2px solid #e8ecf0;border-radius:12px;padding:1rem;cursor:pointer;text-align:center;transition:all .2s">
+              <i class="fas fa-tools" style="font-size:1.5rem;display:block;margin-bottom:.3rem;color:#f5a623"></i>
+              <div class="fw-bold" style="font-size:.88rem">Departmental</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="elSec" style="display:{% if post.course_type == 'core' %}block{% else %}none{% endif %}">
+          <label class="form-label fw-bold">Select Subject *</label>
+          <div class="row g-2">
+            {% for val,label in elective_subjects %}
+            <div class="col-md-4 col-6"><div class="sc {% if post.preferred_subject == val %}pk{% endif %}" onclick="pickSubj('{{ val }}',this)" style="border:2px solid #e8ecf0;border-radius:10px;padding:.55rem .9rem;cursor:pointer;font-size:.82rem;display:flex;align-items:center;gap:.5rem;transition:all .2s">{{ label }}</div></div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div id="dpSec" style="display:{% if post.course_type == 'departmental' %}block{% else %}none{% endif %}">
+          <label class="form-label fw-bold">Select Department *</label>
+          <div class="row g-2 mb-3" id="deptGrid">
+            {% for val,label in dept_choices %}
+            <div class="col-md-4 col-6"><div class="sc {% if post.department == val %}pk{% endif %}" onclick="pickDept('{{ val }}',this)" style="border:2px solid #e8ecf0;border-radius:10px;padding:.55rem .9rem;cursor:pointer;font-size:.82rem;display:flex;align-items:center;gap:.5rem;transition:all .2s">{{ label }}</div></div>
+            {% endfor %}
+          </div>
+          <div id="subjGrid" style="display:{% if post.department %}block{% else %}none{% endif %}">
+            <label class="form-label fw-bold">Select Subject *</label>
+            <div class="row g-2" id="subjList"></div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 style="font-weight:700;color:#003087;margin-bottom:1rem"><i class="fas fa-phone-alt me-2"></i>Emergency Contact</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Contact Name</label>
+            <input type="text" name="emergency_contact" class="form-control" value="{{ post.emergency_contact }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Contact Phone</label>
+            <input type="tel" name="emergency_phone" class="form-control" value="{{ post.emergency_phone }}">
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 style="font-weight:700;color:#003087;margin-bottom:1rem"><i class="fas fa-file-upload me-2"></i>Documents (Optional)</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Profile Photo</label>
+            <input type="file" name="profile_photo" class="form-control" accept="image/*">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Certificate</label>
+            <input type="file" name="certificate_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <a href="{% url 'admin_teachers' %}" class="btn btn-outline-secondary rounded-3 px-4">Cancel</a>
+          <button type="submit" style="background:linear-gradient(135deg,#003087,#0047b3);color:#fff;border:none;border-radius:10px;padding:.6rem 1.5rem;font-weight:700;font-size:.88rem;cursor:pointer;flex:1">
+            <i class="fas fa-user-plus me-2"></i>Create & Complete Teacher Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var DS={
+  information_technology:[['computer_system_servicing','Computer System & Servicing'],['workshop_practice_power','Workshop Practice & Power Mgmt'],['networking_data_comm','Networking & Data Communication']],
+  plumbing:[['plumbing_general','Plumbing (General)'],['plumbing_installation','Plumbing Installation'],['plumbing_maintenance','Plumbing Maintenance']],
+  electricals:[['electrical_installation','Electrical Installation'],['electrical_maintenance','Electrical Maintenance'],['electrical_wiring','Electrical Wiring']],
+  welding_fabrication:[['welding_fabrication','Welding & Fabrication'],['metal_work','Metal Work']],
+  fashion:[['fashion_design','Fashion Design'],['garment_construction','Garment Construction'],['textile_studies','Textile Studies']],
+  catering:[['catering_general','Catering (General)'],['food_beverage','Food & Beverage'],['hospitality','Hospitality Management']],
+  mechanical_engineering:[['mechanical_engineering','Mechanical Engineering'],['machine_maintenance','Machine Maintenance']],
+  auto_mechanics:[['auto_mechanics','Auto Mechanics'],['auto_electrical','Auto Electrical']],
+  building_construction:[['building_construction','Building & Construction'],['masonry','Masonry'],['carpentry','Carpentry']]
+};
+function pickType(t){
+  document.getElementById('hct').value=t;
+  document.getElementById('hs').value='';
+  document.getElementById('hd').value='';
+  document.getElementById('tc_el').classList.toggle('pk',t==='core');
+  document.getElementById('tc_dp').classList.toggle('pk',t==='departmental');
+  document.getElementById('elSec').style.display=t==='core'?'block':'none';
+  document.getElementById('dpSec').style.display=t==='departmental'?'block':'none';
+  document.getElementById('subjGrid').style.display='none';
+}
+function pickSubj(val,el){
+  document.querySelectorAll('#elSec .sc').forEach(function(e){e.classList.remove('pk');});
+  el.classList.add('pk');
+  document.getElementById('hs').value=val;
+}
+function pickDept(val,el){
+  document.querySelectorAll('#deptGrid .sc').forEach(function(e){e.classList.remove('pk');});
+  el.classList.add('pk');
+  document.getElementById('hd').value=val;
+  document.getElementById('hs').value='';
+  var subs=DS[val]||[];
+  document.getElementById('subjList').innerHTML=subs.map(function(s){
+    return '<div class="col-md-4 col-6"><div class="sc" onclick="pickDS(\''+s[0]+'\',this)"><i class=\"fas fa-circle\" style=\"font-size:.4rem;color:#f5a623\"></i>'+s[1]+'</div></div>';
+  }).join('');
+  document.getElementById('subjGrid').style.display='block';
+}
+function pickDS(val,el){
+  document.querySelectorAll('#subjList .sc').forEach(function(e){e.classList.remove('pk');});
+  el.classList.add('pk');
+  document.getElementById('hs').value=val;
+}
+
+// Restore state
+(function(){
+  var ct=document.getElementById('hct').value;
+  var dept=document.getElementById('hd').value;
+  if(ct){pickType(ct);}
+  if(dept){var el=document.querySelector('#deptGrid .sc[onclick*="'+dept+'"]');if(el)pickDept(dept,el);}
+})();
+</script>
+{% endblock %}

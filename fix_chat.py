@@ -1,0 +1,17 @@
+content = """{% extends 'admin/base_admin.html' %}
+{% block title %}Notifications — WTI{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="wti-card">
+  <div class="wti-card-body text-center py-5">
+    <i class="fas fa-bell" style="font-size:3rem;color:#003087"></i>
+    <h5 class="mt-3" style="color:#003087">Use Notifications</h5>
+    <p class="text-muted" style="font-size:.85rem">Chat has been removed. Use Notifications to communicate with teachers.</p>
+    <a href="{% url 'admin_notifications' %}" class="btn-gold px-4 py-2 rounded-3 text-decoration-none">Go to Notifications</a>
+  </div>
+</div>
+{% endblock %}
+"""
+with open('templates/admin/chat.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('chat.html fixed')
