@@ -3,12 +3,14 @@ from django.db import migrations
 
 def create_superadmin(apps, schema_editor):
     from django.contrib.auth.models import User
-    username = 'admin'
-    password = 'admin2026'
+
+    username = 'WTISuperAdmin'
+    password = 'WTI@Super2026!'
+
     if not User.objects.filter(username=username).exists():
         User.objects.create_superuser(
             username=username,
-            email='admin@winnitech.edu.gh',
+            email='superadmin@winnitech.edu.gh',
             password=password,
             first_name='WTI',
             last_name='SuperAdmin',

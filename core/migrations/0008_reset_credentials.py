@@ -1,9 +1,8 @@
 """
-Reset all admin credentials to clean simple ones.
+Reset all admin credentials to the definitive production values.
 
-Super Admin: username=WTISuperAdmin  password=super2026
-Admin:       username=WTIAdmin       password=admin2026
-             (Admin Staff ID = WTIAdmin, used to login at /admin-portal/)
+Super Admin: username=WTISuperAdmin  password=WTI@Super2026!  → /superadmin-portal/
+Admin:       username=WTIAdmin       password=WTI@Admin2026!  → /login/
 """
 from django.db import migrations
 
@@ -14,7 +13,7 @@ def reset_credentials(apps, schema_editor):
 
     # ── Super Admin ──────────────────────────────────────────────────────────
     sa_username = 'WTISuperAdmin'
-    sa_password = 'super2026'
+    sa_password = 'WTI@Super2026!'
 
     sa_users = User.objects.filter(is_superuser=True)
     if sa_users.exists():
@@ -27,21 +26,21 @@ def reset_credentials(apps, schema_editor):
             AdminProfile.objects.update_or_create(user=u, defaults={'role': 'superadmin'})
     else:
         u = User.objects.create_superuser(
-            username=sa_username, password=sa_password,
+            username=sa_username,
+            password=sa_password,
             email='superadmin@winnitech.edu.gh',
-            first_name='WTI', last_name='SuperAdmin'
+            first_name='WTI',
+            last_name='SuperAdmin',
         )
         AdminProfile.objects.create(user=u, role='superadmin')
 
     # ── Admin ─────────────────────────────────────────────────────────────────
-    # Admin Staff ID = WTIAdmin (used as username for login)
     admin_username = 'WTIAdmin'
-    admin_password = 'admin2026'
+    admin_password = 'WTI@Admin2026!'
 
-    # Remove old admin accounts (except superadmin)
+    # Remove any old stale admin accounts
     User.objects.filter(is_staff=True, is_superuser=False).delete()
 
-    # Create fresh admin
     admin_user = User.objects.create_user(
         username=admin_username,
         password=admin_password,
@@ -53,9 +52,9 @@ def reset_credentials(apps, schema_editor):
     )
     AdminProfile.objects.create(user=admin_user, role='admin')
 
-    print('=== CREDENTIALS RESET ===')
-    print(f'Super Admin: {sa_username} / {sa_password}  → /superadmin-portal/')
-    print(f'Admin:       {admin_username} / {admin_password}  → /admin-portal/ (Staff ID login)')
+    print('=== ADMIN ACCOUNTS READY ===')
+    print(f'Super Admin: {sa_username}  →  /superadmin-portal/')
+    print(f'Admin:       {admin_username}  →  /login/')
 
 
 class Migration(migrations.Migration):

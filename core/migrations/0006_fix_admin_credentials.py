@@ -2,12 +2,11 @@ from django.db import migrations
 
 
 def create_default_admin(apps, schema_editor):
-    """Create a default admin account with known credentials."""
     from django.contrib.auth.models import User
     from core.models import AdminProfile
 
-    username = 'WTI_Admin'
-    password = 'Admin@WTI2026'
+    username = 'WTIAdmin'
+    password = 'WTI@Admin2026!'
 
     if not User.objects.filter(username=username).exists():
         u = User.objects.create_user(
@@ -20,7 +19,6 @@ def create_default_admin(apps, schema_editor):
             is_active=True,
         )
         AdminProfile.objects.get_or_create(user=u, defaults={'role': 'admin'})
-        print(f'Admin created: {username} / {password}')
     else:
         u = User.objects.get(username=username)
         u.set_password(password)
@@ -28,7 +26,6 @@ def create_default_admin(apps, schema_editor):
         u.is_active = True
         u.save()
         AdminProfile.objects.get_or_create(user=u, defaults={'role': 'admin'})
-        print(f'Admin updated: {username} / {password}')
 
 
 class Migration(migrations.Migration):
